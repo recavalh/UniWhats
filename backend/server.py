@@ -578,7 +578,7 @@ async def mark_messages_read(conversation_id: str):
 @app.get("/api/departments")
 async def get_departments():
     departments = await db.departments.find({"active": True}).to_list(10)
-    return custom_jsonable_encoder(departments)
+    return clean_documents(departments)
 
 # Users endpoints
 @app.get("/api/users")
