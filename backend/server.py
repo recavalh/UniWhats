@@ -27,6 +27,19 @@ def custom_jsonable_encoder(obj):
         return [custom_jsonable_encoder(item) for item in obj]
     else:
         return obj
+
+def clean_document(doc):
+    """Remove MongoDB ObjectId fields from documents"""
+    if doc and isinstance(doc, dict):
+        doc.pop('_id', None)
+        return doc
+    return doc
+
+def clean_documents(docs):
+    """Remove MongoDB ObjectId fields from a list of documents"""
+    if isinstance(docs, list):
+        return [clean_document(doc) for doc in docs]
+    return clean_document(docs)
 import uuid
 import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
