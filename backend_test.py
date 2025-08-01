@@ -1,0 +1,237 @@
+import requests
+import sys
+from datetime import datetime
+import json
+
+class UniWhatsDeskAPITester:
+    def __init__(self, base_url="https://be14f64f-f2cc-4392-888a-6a11189fd1f5.preview.emergentagent.com"):
+        self.base_url = base_url
+        self.tests_run = 0
+        self.tests_passed = 0
+
+    def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
+        """Run a single API test"""
+        url = f"{self.base_url}/{endpoint}"
+        if headers is None:
+            headers = {'Content-Type': 'application/json'}
+
+        self.tests_run += 1
+        print(f"\n🔍 Testing {name}...")
+        print(f"   URL: {url}")
+        
+        try:
+            if method == 'GET':
+                response = requests.get(url, headers=headers, timeout=10)
+            elif method == 'POST':
+                response = requests.post(url, json=data, headers=headers, timeout=10)
+            elif method == 'PUT':
+                response = requests.put(url, json=data, headers=headers, timeout=10)
+
+            success = response.status_code == expected_status
+            if success:
+                self.tests_passed += 1
+                print(f"✅ Passed - Status: {response.status_code}")
+                try:
+                    response_data = response.json()
+                    if isinstance(response_data, list):
+                        print(f"   Response: List with {len(response_data)} items")
+                    elif isinstance(response_data, dict):
+                        print(f"   Response keys: {list(response_data.keys())}")
+                except:
+                    print(f"   Response: {response.text[:100]}...")
+            else:
+                print(f"❌ Failed - Expected {expected_status}, got {response.status_code}")
+                print(f"   Response: {response.text[:200]}...")
+
+            return success, response.json() if success and response.text else {}
+
+        except requests.exceptions.Timeout:
+            print(f"❌ Failed - Request timeout")
+            return False, {}
+        except requests.exceptions.ConnectionError:
+            print(f"❌ Failed - Connection error")
+            return False, {}
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False, {}
+
+    def test_health_check(self):
+        """Test basic health endpoint"""
+        return self.run_test("Health Check", "GET", "api/test", 200)
+
+    def test_get_departments(self):
+        """Test departments endpoint"""
+        success, response = self.run_test("Get Departments", "GET", "api/departments", 200)
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} departments")
+            expected_departments = ["Reception & Finance", "Coordination", "Sales", "Management"]
+            dept_names = [dept.get('name', '') for dept in response]
+            for expected in expected_departments:
+                if expected in dept_names:
+                    print(f"   ✓ Found department: {expected}")
+                else:
+                    print(f"   ⚠ Missing department: {expected}")
+        return success, response
+
+    def test_get_users(self):
+        """Test users endpoint"""
+        success, response = self.run_test("Get Users", "GET", "api/users", 200)
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} users")
+            expected_users = ["Maria Silva", "Carlos Santos", "Ana Costa", "João Diretor"]
+            user_names = [user.get('name', '') for user in response]
+            for expected in expected_users:
+                if expected in user_names:
+                    print(f"   ✓ Found user: {expected}")
+                else:
+                    print(f"   ⚠ Missing user: {expected}")
+        return success, response
+
+    def test_get_current_user(self):
+        """Test current user endpoint"""
+        success, response = self.run_test("Get Current User", "GET", "api/auth/me", 200)
+        if success and isinstance(response, dict):
+            print(f"   Current user: {response.get('name', 'Unknown')}")
+            print(f"   Role: {response.get('role', 'Unknown')}")
+        return success, response
+
+    def test_get_conversations(self):
+        """Test conversations endpoint"""
+        success, response = self.run_test("Get Conversations", "GET", "api/conversations", 200)
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} conversations")
+            expected_contacts = ["Patricia Almeida", "Roberto Fernandes", "Amanda Silva"]
+            for i, conv in enumerate(response):
+                contact_name = conv.get('contact', {}).get('name', 'Unknown')
+                dept_name = conv.get('department', {}).get('name', 'Unknown')
+                status = conv.get('status', 'Unknown')
+                unread = conv.get('unread_count', 0)
+                print(f"   Conv {i+1}: {contact_name} | {dept_name} | {status} | {unread} unread")
+                
+                if contact_name in expected_contacts:
+                    print(f"   ✓ Found expected contact: {contact_name}")
+        return success, response
+
+    def test_get_messages(self, conversation_id):
+        """Test messages endpoint for a specific conversation"""
+        success, response = self.run_test(
+            f"Get Messages for {conversation_id}", 
+            "GET", 
+            f"api/conversations/{conversation_id}/messages", 
+            200
+        )
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} messages")
+            for i, msg in enumerate(response):
+                direction = msg.get('direction', 'unknown')
+                msg_type = msg.get('type', 'text')
+                body = msg.get('body', '')[:50] + '...' if len(msg.get('body', '')) > 50 else msg.get('body', '')
+                print(f"   Msg {i+1}: {direction} | {msg_type} | {body}")
+        return success, response
+
+    def test_send_message(self, conversation_id):
+        """Test sending a message"""
+        test_message = f"Test message sent at {datetime.now().strftime('%H:%M:%S')}"
+        success, response = self.run_test(
+            f"Send Message to {conversation_id}",
+            "POST",
+            f"api/conversations/{conversation_id}/messages",
+            200,
+            data={
+                "conversation_id": conversation_id,
+                "body": test_message,
+                "type": "text"
+            }
+        )
+        if success:
+            print(f"   Message sent: {test_message}")
+        return success, response
+
+    def test_assign_conversation(self, conversation_id, user_id):
+        """Test assigning a conversation"""
+        success, response = self.run_test(
+            f"Assign Conversation {conversation_id}",
+            "POST",
+            f"api/conversations/{conversation_id}/assign",
+            200,
+            data={
+                "assignee_user_id": user_id
+            }
+        )
+        return success, response
+
+    def test_close_conversation(self, conversation_id):
+        """Test closing a conversation"""
+        success, response = self.run_test(
+            f"Close Conversation {conversation_id}",
+            "POST",
+            f"api/conversations/{conversation_id}/close",
+            200
+        )
+        return success, response
+
+    def test_mark_messages_read(self, conversation_id):
+        """Test marking messages as read"""
+        success, response = self.run_test(
+            f"Mark Messages Read {conversation_id}",
+            "POST",
+            f"api/conversations/{conversation_id}/mark-read",
+            200
+        )
+        return success, response
+
+def main():
+    print("🚀 Starting UniWhats Desk API Tests")
+    print("=" * 50)
+    
+    tester = UniWhatsDeskAPITester()
+    
+    # Basic endpoint tests
+    tester.test_health_check()
+    tester.test_get_departments()
+    tester.test_get_users()
+    tester.test_get_current_user()
+    
+    # Conversation tests
+    success, conversations = tester.test_get_conversations()
+    
+    if success and conversations:
+        # Test first conversation in detail
+        first_conv = conversations[0]
+        conv_id = first_conv.get('id')
+        
+        if conv_id:
+            print(f"\n📋 Testing detailed functionality with conversation: {conv_id}")
+            
+            # Test messages
+            tester.test_get_messages(conv_id)
+            
+            # Test sending message
+            tester.test_send_message(conv_id)
+            
+            # Test mark as read
+            tester.test_mark_messages_read(conv_id)
+            
+            # Test assignment (if we have users)
+            _, users = tester.test_get_users()
+            if users and len(users) > 0:
+                user_id = users[0].get('id')
+                if user_id:
+                    tester.test_assign_conversation(conv_id, user_id)
+            
+            # Test close conversation
+            tester.test_close_conversation(conv_id)
+    
+    # Print final results
+    print("\n" + "=" * 50)
+    print(f"📊 Test Results: {tester.tests_passed}/{tester.tests_run} passed")
+    
+    if tester.tests_passed == tester.tests_run:
+        print("🎉 All tests passed!")
+        return 0
+    else:
+        print(f"⚠️  {tester.tests_run - tester.tests_passed} tests failed")
+        return 1
+
+if __name__ == "__main__":
+    sys.exit(main())
