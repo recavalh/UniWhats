@@ -564,7 +564,8 @@ async def mark_messages_read(conversation_id: str):
 # Departments endpoints
 @app.get("/api/departments")
 async def get_departments():
-    return await db.departments.find({"active": True}).to_list(10)
+    departments = await db.departments.find({"active": True}).to_list(10)
+    return custom_jsonable_encoder(departments)
 
 # Users endpoints
 @app.get("/api/users")
@@ -572,7 +573,7 @@ async def get_users():
     users = await db.users.find({}).to_list(100)
     for user in users:
         user.pop("password_hash", None)
-    return users
+    return custom_jsonable_encoder(users)
 
 # WebSocket endpoint
 @app.websocket("/ws")
