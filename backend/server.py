@@ -2,11 +2,14 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Depe
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+import json
 from datetime import datetime, timedelta
 import os
 from typing import List, Optional, Dict, Any
-import json
-from datetime import datetime
+import uuid
+import asyncio
+from motor.motor_asyncio import AsyncIOMotorClient
+import bcrypt
 
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -29,10 +32,6 @@ def clean_documents(docs):
     if isinstance(docs, list):
         return [clean_document(doc) for doc in docs]
     return clean_document(docs)
-import uuid
-import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
-import bcrypt
 
 # Environment variables
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
