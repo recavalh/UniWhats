@@ -586,7 +586,7 @@ async def get_users():
     users = await db.users.find({}).to_list(100)
     for user in users:
         user.pop("password_hash", None)
-    return custom_jsonable_encoder(users)
+    return clean_documents(users)
 
 # WebSocket endpoint
 @app.websocket("/ws")
