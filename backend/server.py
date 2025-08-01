@@ -17,17 +17,6 @@ class CustomJSONEncoder(json.JSONEncoder):
 # Custom JSON encoder for FastAPI responses
 from fastapi.encoders import jsonable_encoder
 
-def custom_jsonable_encoder(obj):
-    """Custom encoder that properly handles datetime objects"""
-    if isinstance(obj, datetime):
-        return obj.isoformat()
-    elif isinstance(obj, dict):
-        return {key: custom_jsonable_encoder(value) for key, value in obj.items()}
-    elif isinstance(obj, list):
-        return [custom_jsonable_encoder(item) for item in obj]
-    else:
-        return obj
-
 def clean_document(doc):
     """Remove MongoDB ObjectId fields from documents"""
     if doc and isinstance(doc, dict):
