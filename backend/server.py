@@ -6,6 +6,27 @@ from datetime import datetime, timedelta
 import os
 from typing import List, Optional, Dict, Any
 import json
+from datetime import datetime
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+        return super().default(o)
+
+# Custom JSON encoder for FastAPI responses
+from fastapi.encoders import jsonable_encoder
+
+def custom_jsonable_encoder(obj):
+    """Custom encoder that properly handles datetime objects"""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    elif isinstance(obj, dict):
+        return {key: custom_jsonable_encoder(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [custom_jsonable_encoder(item) for item in obj]
+    else:
+        return obj
 import uuid
 import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
