@@ -458,7 +458,7 @@ async def get_messages(conversation_id: str):
                 sender.pop("password_hash", None)
                 msg["sender"] = sender
     
-    return messages
+    return custom_jsonable_encoder(messages)
 
 @app.post("/api/conversations/{conversation_id}/messages")
 async def send_message(conversation_id: str, request: MessageRequest):
