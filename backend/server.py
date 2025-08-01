@@ -470,7 +470,8 @@ async def get_conversations(
         )
         conv["last_message"] = last_msg
     
-    return clean_documents(conversations)
+    cleaned_data = clean_documents(conversations)
+    return JSONResponse(content=cleaned_data)
 
 @app.get("/api/conversations/{conversation_id}/messages")
 async def get_messages(conversation_id: str):
