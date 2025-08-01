@@ -639,6 +639,11 @@ async def mock_send_whatsapp_message(contact_id: str, message: str, message_type
     
     return {"success": True, "conversation_id": conversation["id"]}
 
-@app.get("/api/health")
-async def health_check():
-    return {"status": "ok", "service": "UniWhats Desk API"}
+@app.get("/api/test")
+async def test_endpoint():
+    try:
+        # Test database connection
+        count = await db.conversations.count_documents({})
+        return {"status": "ok", "conversation_count": count}
+    except Exception as e:
+        return {"error": str(e)}
