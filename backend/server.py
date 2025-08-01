@@ -393,7 +393,7 @@ async def get_current_user(user_id: str = "user_maria"):  # Mock current user
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     user.pop("password_hash", None)
-    return user
+    return custom_jsonable_encoder(user)
 
 # Conversations endpoints
 @app.get("/api/conversations")
