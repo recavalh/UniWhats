@@ -444,7 +444,7 @@ async def get_conversations(
         )
         conv["last_message"] = last_msg
     
-    return conversations
+    return custom_jsonable_encoder(conversations)
 
 @app.get("/api/conversations/{conversation_id}/messages")
 async def get_messages(conversation_id: str):
