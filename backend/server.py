@@ -20,17 +20,42 @@ class CustomJSONEncoder(json.JSONEncoder):
 # Custom JSON encoder for FastAPI responses
 from fastapi.encoders import jsonable_encoder
 
+from fastapi.responses import JSONResponse
+import json
+from bson import ObjectId
+
 def clean_document(doc):
-    """Remove MongoDB ObjectId fields from documents"""
-    if doc and isinstance(doc, dict):
-        doc.pop('_id', None)
+    """Remove MongoDB ObjectId fields and convert datetime objects"""
+    if doc is None:
+        return None
+    
+    if isinstance(doc, dict):
+        cleaned = {}
+        for key, value in doc.items():
+            if key == '_id':
+                continue  # Skip ObjectId fields
+            elif isinstance(value, ObjectId):
+                cleaned[key] = str(value)
+            elif isinstance(value, datetime):
+                cleaned[key] = value.isoformat()
+            elif isinstance(value, dict):
+                cleaned[key] = clean_document(value)
+            elif isinstance(value, list):
+                cleaned[key] = [clean_document(item) for item in value]
+            else:
+                cleaned[key] = value
+        return cleaned
+    elif isinstance(doc, list):
+        return [clean_document(item) for item in doc]
+    elif isinstance(doc, ObjectId):
+        return str(doc)
+    elif isinstance(doc, datetime):
+        return doc.isoformat()
+    else:
         return doc
-    return doc
 
 def clean_documents(docs):
     """Remove MongoDB ObjectId fields from a list of documents"""
-    if isinstance(docs, list):
-        return [clean_document(doc) for doc in docs]
     return clean_document(docs)
 
 # Environment variables
