@@ -3,6 +3,7 @@ import './App.css';
 import Login from './components/Login';
 import Settings from './components/Settings';
 import Profile from './components/Profile';
+import MessageComposer from './components/MessageComposer';
 import { Card } from './components/ui/card';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
