@@ -614,8 +614,7 @@ const Settings = ({ currentUser, onBack }) => {
                         ...whatsappFormData, 
                         business_account_id: e.target.value 
                       })}
-                      placeholder="Enter Business Account ID"
-                      required
+                      placeholder="Digite o Business Account ID (opcional)"
                     />
                     <p className="text-xs text-slate-500 mt-1">
                       From Meta Business Manager → Business Settings → Accounts
