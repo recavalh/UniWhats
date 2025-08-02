@@ -645,6 +645,68 @@ async def send_message(conversation_id: str, request: MessageRequest):
     
     return JSONResponse(content=clean_document(message))
 
+@app.post("/api/conversations/{conversation_id}/messages/media")
+async def send_media_message(
+    conversation_id: str,
+    file: UploadFile = File(...),
+    body: str = Form(""),
+    type: str = Form("image")
+):
+    # Mock current user
+    current_user_id = "user_admin"
+    
+    try:
+        # Read file content
+        file_content = await file.read()
+        
+        # Convert to base64 for storage
+        file_base64 = base64.b64encode(file_content).decode('utf-8')
+        
+        # Determine media type
+        media_type = type
+        if media_type not in ['image', 'document', 'audio']:
+            media_type = 'document'
+        
+        # Create message with media
+        message = {
+            "_id": f"msg_{uuid.uuid4().hex[:8]}",
+            "id": f"msg_{uuid.uuid4().hex[:8]}",
+            "conversation_id": conversation_id,
+            "direction": "out",
+            "body": body or f"📎 {file.filename}",
+            "type": media_type,
+            "timestamp": datetime.now(),
+            "sender_user_id": current_user_id,
+            "read_status": True,
+            "media": {
+                "filename": file.filename,
+                "content_type": file.content_type,
+                "data": file_base64,
+                "size": len(file_content)
+            }
+        }
+        
+        await db.messages.insert_one(message)
+        
+        # Update conversation last_message_at
+        await db.conversations.update_one(
+            {"id": conversation_id},
+            {"$set": {"last_message_at": datetime.now(), "updated_at": datetime.now()}}
+        )
+        
+        # Broadcast update
+        await manager.broadcast({
+            "type": "new_message",
+            "conversation_id": conversation_id,
+            "message": clean_document(message)
+        })
+        
+        return JSONResponse(content=clean_document(message))
+        
+    except Exception as e:
+        print(f"Error uploading media: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload media: {str(e)}")
+
 @app.post("/api/conversations/{conversation_id}/assign")
 async def assign_conversation(conversation_id: str, request: AssignRequest):
     update_data = {"updated_at": datetime.now()}
