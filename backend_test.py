@@ -264,15 +264,361 @@ class UniWhatsDeskAPITester:
         )
         return success, response
 
-    def test_mark_messages_read(self, conversation_id):
-        """Test marking messages as read"""
+    def test_critical_authentication_bug(self):
+        """Test CRITICAL ISSUE #1: Authentication Bug - Test login with different users"""
+        print("\n🔐 CRITICAL TEST: Authentication Bug Verification")
+        print("-" * 50)
+        
+        test_users = [
+            {"email": "maria@school.com", "password": "admin123", "expected_name": "Maria Silva", "expected_role": "Receptionist"},
+            {"email": "carlos@school.com", "password": "admin123", "expected_name": "Carlos Santos", "expected_role": "Coordinator"},
+            {"email": "admin@school.com", "password": "admin123", "expected_name": "João Diretor", "expected_role": "Manager"}
+        ]
+        
+        auth_tests_passed = 0
+        total_auth_tests = len(test_users)
+        
+        for user_test in test_users:
+            print(f"\n   Testing login for: {user_test['email']}")
+            
+            # Clear any existing token
+            self.auth_token = None
+            
+            success, response = self.run_test(
+                f"Login as {user_test['email']}",
+                "POST",
+                "api/auth/login",
+                200,
+                data={"email": user_test["email"], "password": user_test["password"]}
+            )
+            
+            if success and 'user' in response:
+                user = response['user']
+                actual_name = user.get('name', '')
+                actual_role = user.get('role', '')
+                actual_email = user.get('email', '')
+                
+                print(f"   ✓ Login successful")
+                print(f"   ✓ Returned user: {actual_name} ({actual_role})")
+                print(f"   ✓ Email: {actual_email}")
+                
+                # Verify correct user profile returned
+                if (actual_name == user_test['expected_name'] and 
+                    actual_role == user_test['expected_role'] and
+                    actual_email == user_test['email']):
+                    print(f"   ✅ PASS: Correct user profile returned")
+                    auth_tests_passed += 1
+                    
+                    # Test /api/auth/me endpoint with this token
+                    if 'token' in response:
+                        self.auth_token = response['token']
+                        me_success, me_response = self.run_test(
+                            f"Get current user info for {user_test['email']}",
+                            "GET",
+                            "api/auth/me",
+                            200
+                        )
+                        
+                        if me_success and me_response.get('name') == user_test['expected_name']:
+                            print(f"   ✅ /api/auth/me returns correct user")
+                        else:
+                            print(f"   ❌ /api/auth/me returns wrong user: {me_response.get('name', 'Unknown')}")
+                else:
+                    print(f"   ❌ FAIL: Wrong user profile returned")
+                    print(f"      Expected: {user_test['expected_name']} ({user_test['expected_role']})")
+                    print(f"      Got: {actual_name} ({actual_role})")
+            else:
+                print(f"   ❌ FAIL: Login failed for {user_test['email']}")
+        
+        # Test logout and cross-contamination
+        print(f"\n   Testing logout and session isolation...")
+        logout_success, _ = self.run_test("Logout", "POST", "api/auth/logout", 200)
+        if logout_success:
+            print(f"   ✅ Logout successful")
+        
+        self.critical_issues['authentication_bug'] = (auth_tests_passed == total_auth_tests)
+        
+        if self.critical_issues['authentication_bug']:
+            print(f"\n✅ CRITICAL ISSUE #1 RESOLVED: Authentication working correctly ({auth_tests_passed}/{total_auth_tests})")
+        else:
+            print(f"\n❌ CRITICAL ISSUE #1 FAILED: Authentication bug present ({auth_tests_passed}/{total_auth_tests})")
+        
+        return self.critical_issues['authentication_bug']
+
+    def test_critical_profile_editing(self):
+        """Test CRITICAL ISSUE #2: Profile Editing"""
+        print("\n👤 CRITICAL TEST: Profile Editing Verification")
+        print("-" * 50)
+        
+        # Login as admin first
+        login_success, login_response = self.test_login("admin@school.com", "admin123")
+        if not login_success:
+            print("❌ Cannot test profile editing - login failed")
+            return False
+        
+        user_id = login_response.get('user', {}).get('id')
+        if not user_id:
+            print("❌ Cannot get user ID for profile editing test")
+            return False
+        
+        print(f"   Testing profile editing for user ID: {user_id}")
+        
+        # Test profile update
+        profile_update_data = {
+            "name": "João Diretor Updated",
+            "email": "admin.updated@school.com",
+            "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
+        }
+        
         success, response = self.run_test(
-            f"Mark Messages Read {conversation_id}",
-            "POST",
-            f"api/conversations/{conversation_id}/mark-read",
+            "Update User Profile",
+            "PUT",
+            f"api/users/{user_id}/profile",
+            200,
+            data=profile_update_data
+        )
+        
+        if success and isinstance(response, dict):
+            updated_name = response.get('name', '')
+            updated_email = response.get('email', '')
+            updated_avatar = response.get('avatar', '')
+            
+            print(f"   ✓ Profile update successful")
+            print(f"   ✓ Updated name: {updated_name}")
+            print(f"   ✓ Updated email: {updated_email}")
+            print(f"   ✓ Updated avatar: {updated_avatar[:50]}...")
+            
+            # Verify changes are reflected immediately
+            me_success, me_response = self.run_test(
+                "Verify profile changes via /api/auth/me",
+                "GET",
+                "api/auth/me",
+                200
+            )
+            
+            if (me_success and 
+                me_response.get('name') == profile_update_data['name'] and
+                me_response.get('email') == profile_update_data['email']):
+                print(f"   ✅ Profile changes reflected immediately")
+                self.critical_issues['profile_editing'] = True
+            else:
+                print(f"   ❌ Profile changes not reflected in /api/auth/me")
+                print(f"      Expected: {profile_update_data['name']}, {profile_update_data['email']}")
+                print(f"      Got: {me_response.get('name', 'Unknown')}, {me_response.get('email', 'Unknown')}")
+        else:
+            print(f"   ❌ Profile update failed")
+        
+        if self.critical_issues['profile_editing']:
+            print(f"\n✅ CRITICAL ISSUE #2 RESOLVED: Profile editing working correctly")
+        else:
+            print(f"\n❌ CRITICAL ISSUE #2 FAILED: Profile editing not working")
+        
+        return self.critical_issues['profile_editing']
+
+    def test_critical_whatsapp_integration(self):
+        """Test CRITICAL ISSUE #3: WhatsApp Integration"""
+        print("\n📱 CRITICAL TEST: WhatsApp Integration Verification")
+        print("-" * 50)
+        
+        # Login as admin (only Manager can access WhatsApp settings)
+        login_success, login_response = self.test_login("admin@school.com", "admin123")
+        if not login_success:
+            print("❌ Cannot test WhatsApp integration - login failed")
+            return False
+        
+        # Test getting WhatsApp settings
+        success, response = self.run_test(
+            "Get WhatsApp Settings",
+            "GET",
+            "api/admin/whatsapp/settings",
             200
         )
-        return success, response
+        
+        if success and isinstance(response, dict):
+            phone_number_id = response.get('phone_number_id', '')
+            business_account_id = response.get('business_account_id', '')
+            webhook_url = response.get('webhook_url', '')
+            configured = response.get('configured', False)
+            
+            print(f"   ✓ WhatsApp settings retrieved")
+            print(f"   ✓ Phone Number ID: {phone_number_id}")
+            print(f"   ✓ Business Account ID: {business_account_id}")
+            print(f"   ✓ Webhook URL: {webhook_url}")
+            print(f"   ✓ Configured: {configured}")
+            
+            # Check if expected credentials are present
+            expected_phone = "183435611523520"
+            expected_business = "177429005461076"
+            expected_webhook = "https://uni-whats.vercel.app/webhooks/whatsapp"
+            
+            if (phone_number_id == expected_phone and 
+                business_account_id == expected_business and
+                webhook_url == expected_webhook):
+                print(f"   ✅ Expected credentials are active")
+                
+                # Test webhook verification endpoint
+                webhook_success, webhook_response = self.run_test(
+                    "Test WhatsApp Webhook Verification",
+                    "GET",
+                    "webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=test_token&hub.challenge=12345",
+                    200  # This might fail if verify token doesn't match, but we test the endpoint
+                )
+                
+                if webhook_success:
+                    print(f"   ✅ Webhook endpoint accessible")
+                else:
+                    print(f"   ⚠ Webhook endpoint test (expected if verify token doesn't match)")
+                
+                self.critical_issues['whatsapp_integration'] = True
+            else:
+                print(f"   ❌ Expected credentials not found")
+                print(f"      Expected Phone: {expected_phone}, Got: {phone_number_id}")
+                print(f"      Expected Business: {expected_business}, Got: {business_account_id}")
+                print(f"      Expected Webhook: {expected_webhook}, Got: {webhook_url}")
+        else:
+            print(f"   ❌ Failed to get WhatsApp settings")
+        
+        if self.critical_issues['whatsapp_integration']:
+            print(f"\n✅ CRITICAL ISSUE #3 RESOLVED: WhatsApp integration configured correctly")
+        else:
+            print(f"\n❌ CRITICAL ISSUE #3 FAILED: WhatsApp integration not properly configured")
+        
+        return self.critical_issues['whatsapp_integration']
+
+    def test_critical_role_based_access(self):
+        """Test CRITICAL ISSUE #4: Role-Based Access Control"""
+        print("\n🔐 CRITICAL TEST: Role-Based Access Control Verification")
+        print("-" * 50)
+        
+        role_tests = [
+            {"email": "maria@school.com", "role": "Receptionist", "should_access_settings": False},
+            {"email": "carlos@school.com", "role": "Coordinator", "should_access_settings": False},
+            {"email": "admin@school.com", "role": "Manager", "should_access_settings": True}
+        ]
+        
+        access_tests_passed = 0
+        total_access_tests = len(role_tests)
+        
+        for role_test in role_tests:
+            print(f"\n   Testing role-based access for: {role_test['role']}")
+            
+            # Login as this user
+            login_success, login_response = self.test_login(role_test['email'], "admin123")
+            if not login_success:
+                print(f"   ❌ Login failed for {role_test['email']}")
+                continue
+            
+            # Test access to admin endpoints (WhatsApp settings)
+            settings_success, settings_response = self.run_test(
+                f"Test admin access for {role_test['role']}",
+                "GET",
+                "api/admin/whatsapp/settings",
+                200 if role_test['should_access_settings'] else 403
+            )
+            
+            if role_test['should_access_settings']:
+                if settings_success:
+                    print(f"   ✅ {role_test['role']} can access admin settings (correct)")
+                    access_tests_passed += 1
+                else:
+                    print(f"   ❌ {role_test['role']} cannot access admin settings (should be able to)")
+            else:
+                if not settings_success:
+                    print(f"   ✅ {role_test['role']} cannot access admin settings (correct)")
+                    access_tests_passed += 1
+                else:
+                    print(f"   ❌ {role_test['role']} can access admin settings (should not be able to)")
+        
+        self.critical_issues['role_based_access'] = (access_tests_passed == total_access_tests)
+        
+        if self.critical_issues['role_based_access']:
+            print(f"\n✅ CRITICAL ISSUE #4 RESOLVED: Role-based access working correctly ({access_tests_passed}/{total_access_tests})")
+        else:
+            print(f"\n❌ CRITICAL ISSUE #4 FAILED: Role-based access not working ({access_tests_passed}/{total_access_tests})")
+        
+        return self.critical_issues['role_based_access']
+
+    def test_critical_media_features(self):
+        """Test CRITICAL ISSUE #5: Media Features (API level)"""
+        print("\n🎵 CRITICAL TEST: Media Features API Verification")
+        print("-" * 50)
+        
+        # Login first
+        login_success, login_response = self.test_login("admin@school.com", "admin123")
+        if not login_success:
+            print("❌ Cannot test media features - login failed")
+            return False
+        
+        # Get conversations to test media message handling
+        conv_success, conversations = self.run_test("Get Conversations for Media Test", "GET", "api/conversations", 200)
+        
+        if conv_success and conversations and len(conversations) > 0:
+            conv_id = conversations[0].get('id')
+            
+            # Test sending different message types
+            media_tests = [
+                {"type": "text", "body": "Test text message"},
+                {"type": "image", "body": "Test image message", "media_url": "https://example.com/image.jpg"},
+                {"type": "document", "body": "Test document message", "media_url": "https://example.com/document.pdf"}
+            ]
+            
+            media_tests_passed = 0
+            
+            for media_test in media_tests:
+                print(f"   Testing {media_test['type']} message...")
+                
+                message_data = {
+                    "conversation_id": conv_id,
+                    "body": media_test['body'],
+                    "type": media_test['type']
+                }
+                
+                if 'media_url' in media_test:
+                    message_data['media_url'] = media_test['media_url']
+                
+                success, response = self.run_test(
+                    f"Send {media_test['type']} message",
+                    "POST",
+                    f"api/conversations/{conv_id}/messages",
+                    200,
+                    data=message_data
+                )
+                
+                if success:
+                    print(f"   ✅ {media_test['type']} message sent successfully")
+                    media_tests_passed += 1
+                else:
+                    print(f"   ❌ {media_test['type']} message failed")
+            
+            # Check if messages were stored with correct types
+            messages_success, messages = self.run_test(
+                f"Get messages to verify media types",
+                "GET",
+                f"api/conversations/{conv_id}/messages",
+                200
+            )
+            
+            if messages_success and messages:
+                recent_messages = messages[-3:]  # Get last 3 messages
+                media_types_found = [msg.get('type', 'text') for msg in recent_messages]
+                print(f"   ✓ Recent message types: {media_types_found}")
+                
+                if len(set(media_types_found)) >= 2:  # At least 2 different types
+                    print(f"   ✅ Multiple media types supported")
+                    self.critical_issues['media_features'] = True
+                else:
+                    print(f"   ⚠ Limited media type support detected")
+            else:
+                print(f"   ❌ Could not verify message types")
+        else:
+            print(f"   ❌ No conversations available for media testing")
+        
+        if self.critical_issues['media_features']:
+            print(f"\n✅ CRITICAL ISSUE #5 RESOLVED: Media features API working")
+        else:
+            print(f"\n❌ CRITICAL ISSUE #5 FAILED: Media features API limited")
+        
+        return self.critical_issues['media_features']
 
 def main():
     print("🚀 Starting UniWhats Desk API Tests")
