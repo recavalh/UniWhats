@@ -962,7 +962,7 @@ async def get_whatsapp_settings(current_user_id: str = "user_admin"):
         "business_account_id": settings.get("business_account_id", ""),
         "api_token": "••••••••" + settings.get("api_token", "")[-4:] if settings.get("api_token") else "",
         "verify_token": "••••••••" + settings.get("verify_token", "")[-4:] if settings.get("verify_token") else "",
-        "webhook_url": f"{os.environ.get('APP_BASE_URL', 'https://your-domain.com')}/webhooks/whatsapp",
+        "webhook_url": "https://uni-whats.vercel.app/webhooks/whatsapp",
         "configured": bool(settings.get("api_token") and settings.get("verify_token"))
     }
     
