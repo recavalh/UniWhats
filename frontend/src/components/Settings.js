@@ -170,7 +170,7 @@ const Settings = ({ currentUser, onBack }) => {
     if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
 
     try {
-      const response = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
+      const response = await authenticatedFetch(`${API_BASE}/api/admin/users/${userId}`, {
         method: 'DELETE'
       });
 
