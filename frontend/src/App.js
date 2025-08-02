@@ -861,7 +861,7 @@ function App() {
                 {/* Messages */}
                 <ScrollArea className="flex-1 p-4">
                   <div className="space-y-4">
-                    {messages.map((message) => (
+                    {(messages || []).map((message) => (
                       <div
                         key={message.id}
                         className={`flex ${message.direction === 'out' ? 'justify-end' : 'justify-start'}`}
