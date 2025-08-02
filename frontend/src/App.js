@@ -31,7 +31,9 @@ import {
   Settings as SettingsIcon,
   LogOut,
   ChevronDown,
-  FileText
+  FileText,
+  X,
+  CheckSquare
 } from 'lucide-react';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
