@@ -30,6 +30,7 @@ import {
 const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
 function App() {
+  const [currentView, setCurrentView] = useState('inbox'); // 'inbox' or 'settings'
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
