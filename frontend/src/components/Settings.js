@@ -188,7 +188,7 @@ const Settings = ({ currentUser, onBack }) => {
 
   const handleToggleDept = async (deptId) => {
     try {
-      const response = await fetch(`${API_BASE}/api/admin/departments/${deptId}/toggle`, {
+      const response = await authenticatedFetch(`${API_BASE}/api/admin/departments/${deptId}/toggle`, {
         method: 'POST'
       });
 
