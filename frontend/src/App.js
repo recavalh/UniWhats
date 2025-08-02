@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import Settings from './components/Settings';
 import { Card } from './components/ui/card';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
@@ -22,7 +23,8 @@ import {
   CheckCircle,
   ArrowRight,
   Paperclip,
-  Smile
+  Smile,
+  Settings as SettingsIcon
 } from 'lucide-react';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
