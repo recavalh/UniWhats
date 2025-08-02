@@ -163,7 +163,6 @@ class MessageRequest(BaseModel):
     type: str = "text"
 
 class AssignRequest(BaseModel):
-    conversation_id: str
     assignee_user_id: Optional[str] = None
     department_id: Optional[str] = None
 
