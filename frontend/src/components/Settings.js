@@ -329,7 +329,7 @@ const Settings = ({ currentUser, onBack }) => {
     return colors[role] || 'bg-gray-100 text-gray-800';
   };
 
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = (users || []).filter(user => 
     user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.role?.toLowerCase().includes(searchTerm.toLowerCase())
