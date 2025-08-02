@@ -450,8 +450,10 @@ async def logout():
     return {"success": True, "message": "Logged out successfully"}
 
 @app.get("/api/auth/me")
-async def get_current_user(authorization: str = None):
-    # Extract user ID from token or use default admin for testing
+async def get_current_user(request: Request):
+    # Extract user ID from token
+    authorization = request.headers.get("authorization") or request.headers.get("Authorization")
+    
     if authorization and authorization.startswith("Bearer "):
         token = authorization.replace("Bearer ", "")
         if token.startswith("uniwhats_"):
@@ -462,10 +464,11 @@ async def get_current_user(authorization: str = None):
                 if user:
                     user.pop("password_hash", None)
                     return clean_document(user)
-            except:
-                pass
+            except Exception as e:
+                print(f"Token parsing error: {e}")
     
     # Fallback to admin user for testing
+    print("No valid token found, using admin fallback")
     user = await db.users.find_one({"id": "user_admin"})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
