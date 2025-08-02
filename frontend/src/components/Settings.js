@@ -397,7 +397,7 @@ const Settings = ({ currentUser, onBack }) => {
       {/* Content */}
       <div className="flex-1 p-6">
         <Tabs defaultValue="users" className="h-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="users" className="flex items-center space-x-2">
               <Users className="w-4 h-4" />
               <span>Usuários</span>
@@ -406,7 +406,19 @@ const Settings = ({ currentUser, onBack }) => {
               <Building className="w-4 h-4" />
               <span>Departamentos</span>
             </TabsTrigger>
+            <TabsTrigger value="whatsapp" className="flex items-center space-x-2">
+              <MessageCircle className="w-4 h-4" />
+              <span>WhatsApp</span>
+            </TabsTrigger>
           </TabsList>
+
+          {/* Notification */}
+          {notification && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center space-x-2 text-blue-700">
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />
+              <span className="text-sm">{notification}</span>
+            </div>
+          )}
 
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-4">
