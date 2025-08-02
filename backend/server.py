@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Depends, Request, Request
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Depends, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -10,6 +10,7 @@ import uuid
 import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
 import bcrypt
+import base64
 
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, o):
