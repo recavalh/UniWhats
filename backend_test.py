@@ -8,6 +8,7 @@ class UniWhatsDeskAPITester:
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
+        self.auth_token = None
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
         """Run a single API test"""
