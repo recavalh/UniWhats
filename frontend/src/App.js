@@ -795,7 +795,7 @@ function App() {
                       
                       {conversation.tags?.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
-                          {conversation.tags.map(tag => (
+                          {(conversation.tags || []).map(tag => (
                             <Badge key={tag} variant="outline" className="text-xs">
                               {tag}
                             </Badge>
