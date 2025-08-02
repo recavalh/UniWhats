@@ -277,7 +277,11 @@ function App() {
 
   const loadConversations = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/conversations`);
+      const response = await fetch(`${API_BASE}/api/conversations`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
       const data = await response.json();
       setConversations(data);
     } catch (error) {
@@ -290,14 +294,25 @@ function App() {
     await loadMessages(conversation.id);
     
     // Mark messages as read
-    await fetch(`${API_BASE}/api/conversations/${conversation.id}/mark-read`, {
-      method: 'POST'
-    });
+    try {
+      await fetch(`${API_BASE}/api/conversations/${conversation.id}/mark-read`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+    }
   };
 
   const loadMessages = async (conversationId) => {
     try {
-      const response = await fetch(`${API_BASE}/api/conversations/${conversationId}/messages`);
+      const response = await fetch(`${API_BASE}/api/conversations/${conversationId}/messages`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
       const data = await response.json();
       setMessages(data);
     } catch (error) {
