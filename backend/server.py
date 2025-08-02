@@ -231,11 +231,13 @@ async def init_mock_data():
         {
             "id": "user_admin",
             "name": "João Diretor",
-            "email": "admin@school.com",
+            "email": "admin@school.com",  # FIXED: Correct admin email
             "password_hash": bcrypt.hashpw("admin123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
             "role": "Manager",
             "department_id": None,
-            "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
+            "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+            "created_at": datetime.now(),
+            "updated_at": datetime.now()
         }
     ]
     
