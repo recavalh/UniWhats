@@ -29,7 +29,8 @@ import {
   Smile,
   Settings as SettingsIcon,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  FileText
 } from 'lucide-react';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
