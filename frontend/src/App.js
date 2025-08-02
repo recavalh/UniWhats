@@ -56,9 +56,78 @@ function App() {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
   useEffect(() => {
-    initializeApp();
-    setupWebSocket();
+    // Check for existing authentication
+    checkExistingAuth();
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      initializeApp();
+      setupWebSocket();
+    }
+  }, [isAuthenticated, currentUser]);
+
+  const checkExistingAuth = () => {
+    const token = localStorage.getItem('auth_token');
+    const userData = localStorage.getItem('user_data');
+    
+    if (token && userData) {
+      try {
+        const user = JSON.parse(userData);
+        setAuthToken(token);
+        setCurrentUser(user);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+      }
+    }
+    setAuthLoading(false);
+  };
+
+  const handleLogin = (user, token) => {
+    setCurrentUser(user);
+    setAuthToken(token);
+    setIsAuthenticated(true);
+    setAuthLoading(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      // Call logout endpoint
+      await fetch(`${API_BASE}/api/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Clear local storage and state
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_data');
+      setIsAuthenticated(false);
+      setAuthToken(null);
+      setCurrentUser(null);
+      setCurrentView('inbox');
+      
+      // Close WebSocket connection
+      if (wsConnection) {
+        wsConnection.close();
+        setWsConnection(null);
+      }
+      
+      // Reset all app state
+      setConversations([]);
+      setSelectedConversation(null);
+      setMessages([]);
+      setUsers([]);
+      setDepartments([]);
+      setLoading(true);
+    }
+  };
 
   const initializeApp = async () => {
     try {
