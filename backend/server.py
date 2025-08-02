@@ -628,7 +628,7 @@ async def mark_messages_read(conversation_id: str):
 # Departments endpoints
 @app.get("/api/departments")
 async def get_departments():
-    departments = await db.departments.find({"active": True}).to_list(10)
+    departments = await db.departments.find({}).to_list(10)  # Show all departments, not just active
     return clean_documents(departments)
 
 # Users endpoints
