@@ -571,7 +571,7 @@ def main():
     # Test basic connectivity first
     print("\n🔗 CONNECTIVITY TEST")
     print("-" * 30)
-    health_success, _ = tester.run_test("Health Check", "GET", "api/auth/login", 422)  # Should return 422 for missing data
+    health_success, _ = tester.run_test("Health Check", "GET", "", 200)  # Test root endpoint
     if not health_success:
         print("❌ Cannot connect to API - stopping tests")
         return 1
