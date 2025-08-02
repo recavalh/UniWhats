@@ -721,7 +721,7 @@ function App() {
               >
                 Minhas
               </Button>
-              {departments.map(dept => (
+              {(departments || []).map(dept => (
                 <Button 
                   key={dept.id}
                   variant={filter === dept.id ? 'default' : 'outline'} 
