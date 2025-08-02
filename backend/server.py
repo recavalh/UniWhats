@@ -158,7 +158,6 @@ class LoginRequest(BaseModel):
     password: str
 
 class MessageRequest(BaseModel):
-    conversation_id: str
     body: str
     type: str = "text"
 
