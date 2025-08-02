@@ -188,6 +188,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Login authentication investigation - COMPLETED"
     - "All backend features tested and verified"
   stuck_tasks: []
   test_all: true
