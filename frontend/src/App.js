@@ -40,7 +40,7 @@ function App() {
   const [authLoading, setAuthLoading] = useState(true);
   
   // App state
-  const [currentView, setCurrentView] = useState('inbox'); // 'inbox' or 'settings'
+  const [currentView, setCurrentView] = useState('inbox'); // 'inbox', 'settings', or 'profile'
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
