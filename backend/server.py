@@ -459,21 +459,24 @@ async def get_current_user(request: Request):
         if token.startswith("uniwhats_"):
             try:
                 # Extract user ID from token format: uniwhats_{user_id}_{random}
-                user_id = token.split("_")[1]
-                user = await db.users.find_one({"id": user_id})
-                if user:
-                    user.pop("password_hash", None)
-                    return clean_document(user)
+                parts = token.split("_")
+                if len(parts) >= 3:
+                    user_id = parts[1]
+                    user = await db.users.find_one({"id": user_id})
+                    if user:
+                        user.pop("password_hash", None)
+                        print(f"✅ Token authentication successful for user: {user.get('name')} ({user.get('id')})")
+                        return clean_document(user)
+                    else:
+                        print(f"❌ User not found for ID: {user_id}")
+                else:
+                    print(f"❌ Invalid token format: {token}")
             except Exception as e:
-                print(f"Token parsing error: {e}")
+                print(f"❌ Token parsing error: {e}")
     
-    # Fallback to admin user for testing
-    print("No valid token found, using admin fallback")
-    user = await db.users.find_one({"id": "user_admin"})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    user.pop("password_hash", None)
-    return clean_document(user)
+    # Return 401 instead of fallback for security
+    print("❌ No valid token found, returning 401")
+    raise HTTPException(status_code=401, detail="Authentication required")
 
 @app.put("/api/users/{user_id}/profile")
 async def update_user_profile(user_id: str, profile_data: dict, request: Request):
