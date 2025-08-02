@@ -243,6 +243,26 @@ const Settings = ({ currentUser, onBack }) => {
     setTimeout(() => setNotification(''), 2000);
   };
 
+  const handleDeleteDept = async (deptId) => {
+    if (!confirm('Tem certeza que deseja excluir este departamento?')) return;
+
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/departments/${deptId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        await loadData();
+      } else {
+        const error = await response.json();
+        alert(error.detail || 'Error deleting department');
+      }
+    } catch (error) {
+      console.error('Error deleting department:', error);
+      alert('Error deleting department');
+    }
+  };
+
   const handleResetPassword = async (userId) => {
     if (!confirm('Tem certeza que deseja resetar a senha deste usuário?')) return;
 
