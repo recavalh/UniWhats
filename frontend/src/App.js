@@ -799,13 +799,63 @@ function App() {
                             ? 'bg-blue-600 text-white'
                             : 'bg-white border border-slate-200 text-slate-900'
                         }`}>
-                          {message.type === 'image' && message.media_url && (
+                          {/* Image Message */}
+                          {message.type === 'image' && message.media && (
+                            <img 
+                              src={`data:${message.media.content_type};base64,${message.media.data}`} 
+                              alt={message.media.filename || "Imagem"} 
+                              className="rounded-lg mb-2 max-w-full cursor-pointer hover:opacity-90"
+                              onClick={() => window.open(`data:${message.media.content_type};base64,${message.media.data}`, '_blank')}
+                            />
+                          )}
+                          
+                          {/* Audio Message */}
+                          {message.type === 'audio' && message.media && (
+                            <div className="mb-2">
+                              <audio 
+                                controls 
+                                className="w-full"
+                                src={`data:${message.media.content_type};base64,${message.media.data}`}
+                              >
+                                Seu navegador não suporta o elemento de áudio.
+                              </audio>
+                            </div>
+                          )}
+                          
+                          {/* Document Message */}
+                          {message.type === 'document' && message.media && (
+                            <div className="flex items-center mb-2 p-2 bg-slate-100 rounded-lg">
+                              <FileText className="w-6 h-6 text-blue-600 mr-3" />
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">{message.media.filename}</p>
+                                <p className="text-xs text-slate-500">
+                                  {(message.media.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const link = document.createElement('a');
+                                  link.href = `data:${message.media.content_type};base64,${message.media.data}`;
+                                  link.download = message.media.filename;
+                                  link.click();
+                                }}
+                              >
+                                Download
+                              </Button>
+                            </div>
+                          )}
+                          
+                          {/* Legacy image support */}
+                          {message.type === 'image' && message.media_url && !message.media && (
                             <img 
                               src={message.media_url} 
                               alt="Imagem" 
                               className="rounded-lg mb-2 max-w-full"
                             />
                           )}
+                          
                           <p className="text-sm">{message.body}</p>
                           <div className={`flex items-center justify-between mt-1 text-xs ${
                             message.direction === 'out' ? 'text-blue-100' : 'text-slate-500'
