@@ -33,6 +33,12 @@ import {
 const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
 function App() {
+  // Authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authToken, setAuthToken] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  
+  // App state
   const [currentView, setCurrentView] = useState('inbox'); // 'inbox' or 'settings'
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
@@ -44,6 +50,10 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // WebSocket and notifications
+  const [wsConnection, setWsConnection] = useState(null);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
 
   useEffect(() => {
     initializeApp();
