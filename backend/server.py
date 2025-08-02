@@ -493,6 +493,7 @@ async def send_message(conversation_id: str, request: MessageRequest):
     current_user_id = "user_maria"
     
     message = {
+        "_id": f"msg_{uuid.uuid4().hex[:8]}",
         "id": f"msg_{uuid.uuid4().hex[:8]}",
         "conversation_id": conversation_id,
         "direction": "out",
@@ -515,10 +516,10 @@ async def send_message(conversation_id: str, request: MessageRequest):
     await manager.broadcast({
         "type": "new_message",
         "conversation_id": conversation_id,
-        "message": message
+        "message": clean_document(message)
     })
     
-    return message
+    return JSONResponse(content=clean_document(message))
 
 @app.post("/api/conversations/{conversation_id}/assign")
 async def assign_conversation(conversation_id: str, request: AssignRequest):
