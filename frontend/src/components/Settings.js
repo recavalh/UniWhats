@@ -63,23 +63,31 @@ const Settings = ({ currentUser, onBack }) => {
 
   const loadData = async () => {
     try {
+      const token = localStorage.getItem('auth_token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
       const [usersRes, departmentsRes, whatsappRes] = await Promise.all([
-        fetch(`${API_BASE}/api/admin/users`),
-        fetch(`${API_BASE}/api/departments`),
-        fetch(`${API_BASE}/api/admin/whatsapp/settings`)
+        fetch(`${API_BASE}/api/admin/users`, { headers }),
+        fetch(`${API_BASE}/api/admin/departments`, { headers }),
+        fetch(`${API_BASE}/api/admin/whatsapp/settings`, { headers })
       ]);
 
-      const usersData = await usersRes.json();
-      const departmentsData = await departmentsRes.json();
-      const whatsappData = await whatsappRes.json();
+      const usersData = usersRes.ok ? await usersRes.json() : [];
+      const departmentsData = departmentsRes.ok ? await departmentsRes.json() : [];
+      const whatsappData = whatsappRes.ok ? await whatsappRes.json() : {};
 
-      setUsers(usersData);
-      setDepartments(departmentsData);
-      setWhatsappSettings(whatsappData);
-      setWhatsappFormData(whatsappData);
+      setUsers(Array.isArray(usersData) ? usersData : []);
+      setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
+      setWhatsappSettings(whatsappData || {});
+      setWhatsappFormData(whatsappData || {});
       setLoading(false);
     } catch (error) {
       console.error('Error loading data:', error);
+      // Set default values on error
+      setUsers([]);
+      setDepartments([]);
+      setWhatsappSettings({});
+      setWhatsappFormData({});
       setLoading(false);
     }
   };
