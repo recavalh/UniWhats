@@ -41,9 +41,23 @@ def clean_document(doc: dict) -> dict:
     return cleaned
 
 # MongoDB Connection
+print(f"🔍 Debug: All environment variables: {list(os.environ.keys())}")
+print(f"🔍 Debug: MONGO_URL from env: {os.environ.get('MONGO_URL')}")
+
 MONGO_URL = os.environ.get('MONGO_URL')
 if not MONGO_URL:
-    raise Exception("MONGO_URL environment variable is not set")
+    # Try to load from .env file manually
+    try:
+        from dotenv import load_dotenv
+        load_dotenv('/app/backend/.env')
+        MONGO_URL = os.environ.get('MONGO_URL')
+        print(f"🔍 Debug: MONGO_URL after loading .env: {MONGO_URL}")
+    except ImportError:
+        pass
+    
+    if not MONGO_URL:
+        MONGO_URL = "mongodb://localhost:27017"  # Default fallback
+        print(f"🔍 Debug: Using fallback MONGO_URL: {MONGO_URL}")
 
 print(f"🔗 Connecting to MongoDB: {MONGO_URL}")
 
