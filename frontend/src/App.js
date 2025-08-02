@@ -143,12 +143,22 @@ function App() {
 
   const initializeApp = async () => {
     try {
+      // Get auth token for API calls
+      const token = localStorage.getItem('auth_token');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       // Load initial data
       const [conversationsRes, departmentsRes, usersRes, currentUserRes] = await Promise.all([
-        fetch(`${API_BASE}/api/conversations`),
-        fetch(`${API_BASE}/api/departments`),
-        fetch(`${API_BASE}/api/users`),
-        fetch(`${API_BASE}/api/auth/me`)
+        fetch(`${API_BASE}/api/conversations`, { headers }),
+        fetch(`${API_BASE}/api/departments`, { headers }),
+        fetch(`${API_BASE}/api/users`, { headers }),
+        fetch(`${API_BASE}/api/auth/me`, { headers })
       ]);
 
       const [convData, deptData, usersData, userData] = await Promise.all([
