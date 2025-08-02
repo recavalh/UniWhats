@@ -483,6 +483,68 @@ async def get_current_user(request: Request):
     print("❌ No valid token found, returning 401")
     raise HTTPException(status_code=401, detail="Authentication required")
 
+@app.put("/api/users/profile")
+async def update_my_profile(profile_data: dict, request: Request):
+    # Extract current user from token
+    authorization = request.headers.get("authorization") or request.headers.get("Authorization")
+    current_user_id = None
+    
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "")
+        if token.startswith("uniwhats_"):
+            try:
+                # Extract user ID from token format: uniwhats_user_admin_random
+                parts = token.split("_")
+                if len(parts) >= 4:
+                    # Reconstruct user_id from parts 1 and 2: user_admin, user_maria, etc.
+                    current_user_id = f"{parts[1]}_{parts[2]}"
+                    print(f"✅ Profile update - extracted user_id: {current_user_id}")
+                else:
+                    print(f"❌ Profile update - invalid token format: {token}")
+            except Exception as e:
+                print(f"❌ Profile update - token parsing error: {e}")
+    
+    if not current_user_id:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    # Check if user exists
+    current_user = await db.users.find_one({"id": current_user_id})
+    if not current_user:
+        print(f"❌ Profile update - user not found for ID: {current_user_id}")
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    # Update user profile
+    update_data = {}
+    if "name" in profile_data:
+        update_data["name"] = profile_data["name"].strip()
+    if "email" in profile_data:
+        # Check if email is already taken by another user
+        existing_user = await db.users.find_one({"email": profile_data["email"], "id": {"$ne": current_user_id}})
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already in use")
+        update_data["email"] = profile_data["email"].strip()
+    if "avatar" in profile_data:
+        update_data["avatar"] = profile_data["avatar"]
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    
+    update_data["updated_at"] = datetime.now()
+    
+    result = await db.users.update_one(
+        {"id": current_user_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Return updated user data
+    updated_user = await db.users.find_one({"id": current_user_id})
+    updated_user.pop("password_hash", None)
+    
+    return clean_document(updated_user)
+
 @app.put("/api/users/{user_id}/profile")
 async def update_user_profile(user_id: str, profile_data: dict, request: Request):
     # Extract current user from token
