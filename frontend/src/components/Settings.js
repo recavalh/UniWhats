@@ -63,16 +63,20 @@ const Settings = ({ currentUser, onBack }) => {
 
   const loadData = async () => {
     try {
-      const [usersRes, departmentsRes] = await Promise.all([
+      const [usersRes, departmentsRes, whatsappRes] = await Promise.all([
         fetch(`${API_BASE}/api/admin/users`),
-        fetch(`${API_BASE}/api/departments`)
+        fetch(`${API_BASE}/api/departments`),
+        fetch(`${API_BASE}/api/admin/whatsapp/settings`)
       ]);
 
       const usersData = await usersRes.json();
       const departmentsData = await departmentsRes.json();
+      const whatsappData = await whatsappRes.json();
 
       setUsers(usersData);
       setDepartments(departmentsData);
+      setWhatsappSettings(whatsappData);
+      setWhatsappFormData(whatsappData);
       setLoading(false);
     } catch (error) {
       console.error('Error loading data:', error);
