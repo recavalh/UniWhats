@@ -879,24 +879,30 @@ async def update_department_admin(dept_id: str, dept_data: dict, current_user_id
     
     return {"success": True}
 
-@app.delete("/api/admin/departments/{dept_id}")
-async def delete_department_admin(dept_id: str, current_user_id: str = "user_admin"):
+@app.post("/api/admin/departments/{dept_id}/toggle")
+async def toggle_department_status(dept_id: str, current_user_id: str = "user_admin"):
     # Check if current user is admin
     current_user = await db.users.find_one({"id": current_user_id})
     if not current_user or current_user.get("role") != "Manager":
         raise HTTPException(status_code=403, detail="Access denied. Admin role required.")
     
-    # Check if department has users
-    users_count = await db.users.count_documents({"department_id": dept_id})
-    if users_count > 0:
-        raise HTTPException(status_code=400, detail=f"Cannot delete department with {users_count} active users")
-    
-    result = await db.departments.delete_one({"id": dept_id})
-    
-    if result.deleted_count == 0:
+    # Get current department status
+    dept = await db.departments.find_one({"id": dept_id})
+    if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
     
-    return {"success": True}
+    # Toggle the active status
+    new_status = not dept.get("active", True)
+    
+    result = await db.departments.update_one(
+        {"id": dept_id},
+        {"$set": {"active": new_status, "updated_at": datetime.now()}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Department not found")
+    
+    return {"success": True, "active": new_status}
 
 @app.get("/api/test")
 async def test_endpoint():
