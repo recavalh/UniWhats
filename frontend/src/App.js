@@ -162,8 +162,8 @@ function App() {
       // Load initial data
       const [conversationsRes, departmentsRes, usersRes, currentUserRes] = await Promise.all([
         fetch(`${API_BASE}/api/conversations`, { headers }),
-        fetch(`${API_BASE}/api/departments`, { headers }),
-        fetch(`${API_BASE}/api/users`, { headers }),
+        fetch(`${API_BASE}/api/admin/departments`, { headers }),
+        fetch(`${API_BASE}/api/admin/users`, { headers }),
         fetch(`${API_BASE}/api/auth/me`, { headers })
       ]);
 
