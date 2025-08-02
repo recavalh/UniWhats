@@ -34,6 +34,17 @@ import {
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
+// Helper function for authenticated requests
+const authenticatedFetch = async (url, options = {}) => {
+  const token = localStorage.getItem('auth_token');
+  const headers = {
+    ...(options.headers || {}),
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+  
+  return fetch(url, { ...options, headers });
+};
+
 const Settings = ({ currentUser, onBack }) => {
   const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);
