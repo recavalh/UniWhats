@@ -472,6 +472,58 @@ async def get_current_user(authorization: str = None):
     user.pop("password_hash", None)
     return clean_document(user)
 
+@app.put("/api/users/{user_id}/profile")
+async def update_user_profile(user_id: str, profile_data: dict, authorization: str = None):
+    # Extract current user from token
+    current_user_id = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "")
+        if token.startswith("uniwhats_"):
+            try:
+                current_user_id = token.split("_")[1]
+            except:
+                pass
+    
+    # Users can only edit their own profile (or admin can edit any)
+    current_user = await db.users.find_one({"id": current_user_id})
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    if current_user_id != user_id and current_user.get("role") != "Manager":
+        raise HTTPException(status_code=403, detail="Can only edit your own profile")
+    
+    # Update user profile
+    update_data = {}
+    if "name" in profile_data:
+        update_data["name"] = profile_data["name"].strip()
+    if "email" in profile_data:
+        # Check if email is already taken by another user
+        existing_user = await db.users.find_one({"email": profile_data["email"], "id": {"$ne": user_id}})
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already in use")
+        update_data["email"] = profile_data["email"].strip()
+    if "avatar" in profile_data:
+        update_data["avatar"] = profile_data["avatar"]
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    
+    update_data["updated_at"] = datetime.now()
+    
+    result = await db.users.update_one(
+        {"id": user_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Return updated user data
+    updated_user = await db.users.find_one({"id": user_id})
+    updated_user.pop("password_hash", None)
+    
+    return clean_document(updated_user)
+
 # Conversations endpoints
 @app.get("/api/conversations")
 async def get_conversations(
