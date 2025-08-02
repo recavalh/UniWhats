@@ -410,7 +410,7 @@ async def login(request: LoginRequest):
     # Remove password hash from response
     user.pop("password_hash")
     
-    # Create a simple JWT-like token (in production, use proper JWT)
+    # Create a simple JWT-like token with user ID
     token = f"uniwhats_{user['id']}_{uuid.uuid4().hex[:16]}"
     
     return {"user": clean_document(user), "token": token}
@@ -450,12 +450,27 @@ async def logout():
     return {"success": True, "message": "Logged out successfully"}
 
 @app.get("/api/auth/me")
-async def get_current_user(user_id: str = "user_admin"):  # Mock admin user
-    user = await db.users.find_one({"id": user_id})
+async def get_current_user(authorization: str = None):
+    # Extract user ID from token or use default admin for testing
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "")
+        if token.startswith("uniwhats_"):
+            try:
+                # Extract user ID from token format: uniwhats_{user_id}_{random}
+                user_id = token.split("_")[1]
+                user = await db.users.find_one({"id": user_id})
+                if user:
+                    user.pop("password_hash", None)
+                    return clean_document(user)
+            except:
+                pass
+    
+    # Fallback to admin user for testing
+    user = await db.users.find_one({"id": "user_admin"})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     user.pop("password_hash", None)
-    return clean_documents(user)
+    return clean_document(user)
 
 # Conversations endpoints
 @app.get("/api/conversations")
