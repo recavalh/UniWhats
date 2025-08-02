@@ -37,6 +37,7 @@ const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 const Settings = ({ currentUser, onBack }) => {
   const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [whatsappSettings, setWhatsappSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showUserForm, setShowUserForm] = useState(false);
@@ -44,6 +45,12 @@ const Settings = ({ currentUser, onBack }) => {
   const [editingUser, setEditingUser] = useState(null);
   const [editingDept, setEditingDept] = useState(null);
   const [formData, setFormData] = useState({});
+  const [whatsappFormData, setWhatsappFormData] = useState({});
+  const [showTokens, setShowTokens] = useState({
+    api_token: false,
+    verify_token: false
+  });
+  const [notification, setNotification] = useState('');
 
   // Check if current user is admin
   const isAdmin = currentUser?.role === 'Manager';
