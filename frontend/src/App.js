@@ -163,25 +163,88 @@ function App() {
   };
 
   const setupWebSocket = () => {
+    // Close existing connection
+    if (wsConnection) {
+      wsConnection.close();
+    }
+
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     
     try {
       const ws = new WebSocket(wsUrl);
       
+      ws.onopen = () => {
+        console.log('✅ WebSocket connected successfully');
+        setWsConnection(ws);
+      };
+      
       ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        
-        if (data.type === 'new_message') {
-          // Refresh conversations and messages
-          loadConversations();
-          if (selectedConversation && data.conversation_id === selectedConversation.id) {
-            loadMessages(selectedConversation.id);
+        try {
+          const data = JSON.parse(event.data);
+          console.log('📨 WebSocket message received:', data);
+          
+          if (data.type === 'new_message') {
+            // Refresh conversations and messages immediately
+            loadConversations();
+            if (selectedConversation && data.conversation_id === selectedConversation.id) {
+              loadMessages(selectedConversation.id);
+            }
+            
+            // Show notification for incoming messages
+            if (data.message?.direction === 'in') {
+              showNotification('Nova mensagem recebida!', data.message.body);
+            }
+          } else if (data.type === 'conversation_updated') {
+            // Refresh conversations for assignment/transfer updates
+            loadConversations();
+          } else if (data.type === 'messages_read') {
+            // Update conversation read status
+            loadConversations();
           }
+        } catch (error) {
+          console.error('Error processing WebSocket message:', error);
         }
       };
+      
+      ws.onclose = (event) => {
+        console.log('❌ WebSocket disconnected:', event.code, event.reason);
+        setWsConnection(null);
+        
+        // Attempt to reconnect after 3 seconds if not intentional
+        if (event.code !== 1000 && isAuthenticated) {
+          setTimeout(() => {
+            console.log('🔄 Attempting WebSocket reconnection...');
+            setupWebSocket();
+          }, 3000);
+        }
+      };
+      
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+      
     } catch (error) {
-      console.error('WebSocket connection failed:', error);
+      console.error('WebSocket setup failed:', error);
+    }
+  };
+
+  const showNotification = (title, body) => {
+    // Browser notification (if permission granted)
+    if (Notification.permission === 'granted') {
+      new Notification(title, {
+        body: body,
+        icon: '/favicon.ico'
+      });
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          new Notification(title, {
+            body: body,
+            icon: '/favicon.ico'
+          });
+        }
+      });
     }
   };
 
