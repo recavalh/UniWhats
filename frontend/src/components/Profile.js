@@ -15,7 +15,7 @@ import {
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
-const Profile = ({ currentUser, onBack, onUserUpdate }) => {
+const Profile = ({ currentUser, users = [], onBack, onUserUpdate }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
