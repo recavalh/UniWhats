@@ -506,6 +506,11 @@ function App() {
     }
   };
 
+  const getDepartmentName = (departmentId) => {
+    const department = departments.find(d => d.id === departmentId);
+    return department ? department.name : 'Departamento';
+  };
+
   const getDepartmentColor = (deptId) => {
     const colors = {
       'dept_reception': 'bg-blue-100 text-blue-800',
