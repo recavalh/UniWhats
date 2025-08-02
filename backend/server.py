@@ -476,9 +476,11 @@ async def get_current_user(request: Request):
     return clean_document(user)
 
 @app.put("/api/users/{user_id}/profile")
-async def update_user_profile(user_id: str, profile_data: dict, authorization: str = None):
+async def update_user_profile(user_id: str, profile_data: dict, request: Request):
     # Extract current user from token
+    authorization = request.headers.get("authorization") or request.headers.get("Authorization")
     current_user_id = None
+    
     if authorization and authorization.startswith("Bearer "):
         token = authorization.replace("Bearer ", "")
         if token.startswith("uniwhats_"):
