@@ -452,11 +452,20 @@ const Settings = ({ currentUser, onBack }) => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => startEditDept(dept)}
-                      className="flex-1"
+                      onClick={() => handleToggleDept(dept.id)}
+                      className={`flex-1 ${dept.active 
+                        ? 'text-orange-600 hover:text-orange-700' 
+                        : 'text-green-600 hover:text-green-700'
+                      }`}
                     >
-                      <Edit className="w-3 h-3 mr-1" />
-                      Editar
+                      {dept.active ? 'Desativar' : 'Ativar'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => startEditDept(dept)}
+                    >
+                      <Edit className="w-3 h-3" />
                     </Button>
                     <Button
                       variant="outline"
