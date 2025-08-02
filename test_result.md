@@ -165,6 +165,21 @@ backend:
         agent: "testing"
         comment: "✅ VERIFIED: POST /api/conversations/{conversation_id}/messages/media endpoint working correctly. Successfully tested file upload with proper multipart/form-data handling. Access control properly enforced - users can only upload to conversations they have access to. Tested with different user roles and conversation access patterns."
 
+  - task: "Login authentication investigation"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported 'Invalid credentials' issue when trying to login with admin@school.com/admin123, maria@school.com/maria123, carlos@school.com/carlos123, ana@school.com/ana123"
+      - working: true
+        agent: "testing"
+        comment: "✅ ISSUE RESOLVED: Investigated login problem and found admin user email was changed to 'admin.updated.214328@school.com' during previous profile editing tests. Fixed by resetting admin email back to 'admin@school.com'. VERIFICATION COMPLETE: All 4 users can login successfully - admin@school.com/admin123 (Manager), maria@school.com/maria123 (Receptionist), carlos@school.com/carlos123 (Coordinator), ana@school.com/ana123 (Sales Rep). Password hashing working correctly, database contains expected users, login endpoint properly rejects invalid credentials. Mock data loaded correctly. No authentication issues detected."
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
