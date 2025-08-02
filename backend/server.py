@@ -488,7 +488,7 @@ async def get_messages(conversation_id: str):
 @app.post("/api/conversations/{conversation_id}/messages")
 async def send_message(conversation_id: str, request: MessageRequest):
     # Mock current user
-    current_user_id = "user_maria"
+    current_user_id = "user_admin"
     
     message = {
         "_id": f"msg_{uuid.uuid4().hex[:8]}",
