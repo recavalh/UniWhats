@@ -36,11 +36,11 @@ def clean_document(doc: dict) -> dict:
             continue
         elif isinstance(value, datetime):
             cleaned[key] = value.isoformat()
-        elif hasattr(value, '__dict__') and hasattr(value, 'binary'):
-            # Handle ObjectId and similar MongoDB types
+        elif isinstance(value, ObjectId):
+            # Convert ObjectId to string
             cleaned[key] = str(value)
         elif isinstance(value, list):
-            cleaned[key] = [clean_document(item) if isinstance(item, dict) else (str(item) if hasattr(item, '__dict__') and hasattr(item, 'binary') else item) for item in value]
+            cleaned[key] = [clean_document(item) if isinstance(item, dict) else (str(item) if isinstance(item, ObjectId) else item) for item in value]
         elif isinstance(value, dict):
             cleaned[key] = clean_document(value)
         else:
