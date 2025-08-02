@@ -1049,7 +1049,7 @@ function App() {
                           Transferir para Departamento
                         </label>
                         <div className="space-y-2">
-                          {departments.filter(d => d.id !== selectedConversation.department_id).map(dept => (
+                          {(departments || []).filter(d => d.id !== selectedConversation.department_id).map(dept => (
                             <Button
                               key={dept.id}
                               variant="outline"
