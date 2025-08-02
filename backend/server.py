@@ -665,6 +665,201 @@ async def mock_send_whatsapp_message(contact_id: str, message: str, message_type
     
     return {"success": True, "conversation_id": conversation["id"]}
 
+# Settings and Admin endpoints
+@app.get("/api/admin/users")
+async def get_all_users_admin(current_user_id: str = "user_admin"):  # Mock admin check
+    # Check if current user is admin
+    current_user = await db.users.find_one({"id": current_user_id})
+    if not current_user or current_user.get("role") != "Manager":
+        raise HTTPException(status_code=403, detail="Access denied. Admin role required.")
+    
+    users = await db.users.find({}).to_list(100)
+    for user in users:
+        user.pop("password_hash", None)
+        # Get department info
+        if user.get("department_id"):
+            dept = await db.departments.find_one({"id": user["department_id"]})
+            user["department"] = dept
+    
+    return clean_documents(users)
+
+@app.post("/api/admin/users")
+async def create_user_admin(user_data: dict, current_user_id: str = "user_admin"):
+    # Check if current user is admin
+    current_user = await db.users.find_one({"id": current_user_id})
+    if not current_user or current_user.get("role") != "Manager":
+        raise HTTPException(status_code=403, detail="Access denied. Admin role required.")
+    
+    # Check if email already exists
+    existing_user = await db.users.find_one({"email": user_data["email"]})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already exists")
+    
+    # Create new user
+    new_user = {
+        "_id": f"user_{uuid.uuid4().hex[:8]}",
+        "id": f"user_{uuid.uuid4().hex[:8]}",
+        "name": user_data["name"],
+        "email": user_data["email"],
+        "password_hash": bcrypt.hashpw(user_data["password"].encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
+        "role": user_data["role"],
+        "department_id": user_data.get("department_id"),
+        "avatar": user_data.get("avatar", f"https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"),
+        "created_at": datetime.now(),
+        "active": True
+    }
+    
+    await db.users.insert_one(new_user)
+    new_user.pop("password_hash", None)
+    
+    return JSONResponse(content=clean_document(new_user))
+
+@app.put("/api/admin/users/{user_id}")
+async def update_user_admin(user_id: str, user_data: dict, current_user_id: str = "user_admin"):
+    # Check if current user is admin
+    current_user = await db.users.find_one({"id": current_user_id})
+    if not current_user or current_user.get("role") != "Manager":
+        raise HTTPException(status_code=403, detail="Access denied. Admin role required.")
+    
+    # Update user
+    update_data = {
+        "name": user_data["name"],
+        "email": user_data["email"],
+        "role": user_data["role"],
+        "department_id": user_data.get("department_id"),
+        "updated_at": datetime.now()
+    }
+    
+    # Update password if provided
+    if user_data.get("password"):
+        update_data["password_hash"] = bcrypt.hashpw(user_data["password"].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    result = await db.users.update_one(
+        {"id": user_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"success": True}
+
+@app.delete("/api/admin/users/{user_id}")
+async def delete_user_admin(user_id: str, current_user_id: str = "user_admin"):
+    # Check if current user is admin
+    current_user = await db.users.find_one({"id": current_user_id})
+    if not current_user or current_user.get("role") != "Manager":
+        raise HTTPException(status_code=403, detail="Access denied. Admin role required.")
+    
+    # Don't allow deleting self
+    if user_id == current_user_id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    result = await db.users.delete_one({"id": user_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"success": True}
+
+@app.post("/api/admin/users/{user_id}/reset-password")
+async def reset_user_password(user_id: str, current_user_id: str = "user_admin"):
+    # Check if current user is admin
+    current_user = await db.users.find_one({"id": current_user_id})
+    if not current_user or current_user.get("role") != "Manager":
+        raise HTTPException(status_code=403, detail="Access denied. Admin role required.")
+    
+    # Find user
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Generate temporary password
+    temp_password = f"temp{uuid.uuid4().hex[:8]}"
+    password_hash = bcrypt.hashpw(temp_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    # Update password
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"password_hash": password_hash, "password_reset_required": True}}
+    )
+    
+    # Mock email sending
+    print(f"📧 Password reset email sent to {user['email']}")
+    print(f"   Temporary password: {temp_password}")
+    
+    return {
+        "success": True, 
+        "message": f"Password reset email sent to {user['email']}",
+        "temp_password": temp_password  # In production, don't return this
+    }
+
+# Department admin endpoints
+@app.post("/api/admin/departments")
+async def create_department_admin(dept_data: dict, current_user_id: str = "user_admin"):
+    # Check if current user is admin
+    current_user = await db.users.find_one({"id": current_user_id})
+    if not current_user or current_user.get("role") != "Manager":
+        raise HTTPException(status_code=403, detail="Access denied. Admin role required.")
+    
+    new_dept = {
+        "_id": f"dept_{uuid.uuid4().hex[:8]}",
+        "id": f"dept_{uuid.uuid4().hex[:8]}",
+        "name": dept_data["name"],
+        "description": dept_data["description"],
+        "active": dept_data.get("active", True),
+        "business_hours": dept_data.get("business_hours", {"start": "09:00", "end": "17:00"}),
+        "created_at": datetime.now()
+    }
+    
+    await db.departments.insert_one(new_dept)
+    
+    return JSONResponse(content=clean_document(new_dept))
+
+@app.put("/api/admin/departments/{dept_id}")
+async def update_department_admin(dept_id: str, dept_data: dict, current_user_id: str = "user_admin"):
+    # Check if current user is admin
+    current_user = await db.users.find_one({"id": current_user_id})
+    if not current_user or current_user.get("role") != "Manager":
+        raise HTTPException(status_code=403, detail="Access denied. Admin role required.")
+    
+    update_data = {
+        "name": dept_data["name"],
+        "description": dept_data["description"],
+        "active": dept_data.get("active", True),
+        "business_hours": dept_data.get("business_hours", {"start": "09:00", "end": "17:00"}),
+        "updated_at": datetime.now()
+    }
+    
+    result = await db.departments.update_one(
+        {"id": dept_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Department not found")
+    
+    return {"success": True}
+
+@app.delete("/api/admin/departments/{dept_id}")
+async def delete_department_admin(dept_id: str, current_user_id: str = "user_admin"):
+    # Check if current user is admin
+    current_user = await db.users.find_one({"id": current_user_id})
+    if not current_user or current_user.get("role") != "Manager":
+        raise HTTPException(status_code=403, detail="Access denied. Admin role required.")
+    
+    # Check if department has users
+    users_count = await db.users.count_documents({"department_id": dept_id})
+    if users_count > 0:
+        raise HTTPException(status_code=400, detail=f"Cannot delete department with {users_count} active users")
+    
+    result = await db.departments.delete_one({"id": dept_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Department not found")
+    
+    return {"success": True}
+
 @app.get("/api/test")
 async def test_endpoint():
     try:
