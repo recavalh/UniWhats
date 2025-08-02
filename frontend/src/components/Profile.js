@@ -38,8 +38,12 @@ const Profile = ({ currentUser, users = [], onBack, onUserUpdate }) => {
     e.preventDefault();
     setLoading(true);
 
+    console.log('📝 Profile update - form data:', formData);
+
     try {
       const token = localStorage.getItem('auth_token');
+      console.log('🔑 Profile update - token:', token ? 'Present' : 'Missing');
+      
       const response = await fetch(`${API_BASE}/api/users/profile`, {
         method: 'PUT',
         headers: {
@@ -49,8 +53,11 @@ const Profile = ({ currentUser, users = [], onBack, onUserUpdate }) => {
         body: JSON.stringify(formData)
       });
 
+      console.log('📡 Profile update - response status:', response.status);
+
       if (response.ok) {
         const updatedUser = await response.json();
+        console.log('✅ Profile update - response data:', updatedUser);
         
         // Update local storage
         localStorage.setItem('user_data', JSON.stringify(updatedUser));
@@ -60,15 +67,23 @@ const Profile = ({ currentUser, users = [], onBack, onUserUpdate }) => {
           onUserUpdate(updatedUser);
         }
         
+        // Update form data with response to ensure sync
+        setFormData({
+          name: updatedUser.name || '',
+          email: updatedUser.email || '',
+          avatar: updatedUser.avatar || ''
+        });
+        
         setNotification('✅ Perfil atualizado com sucesso!');
         setTimeout(() => setNotification(''), 3000);
       } else {
         const error = await response.json();
+        console.error('❌ Profile update error:', error);
         setNotification(`❌ Erro: ${error.detail || 'Erro ao atualizar perfil'}`);
         setTimeout(() => setNotification(''), 5000);
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('❌ Profile update exception:', error);
       setNotification('❌ Erro de conexão. Tente novamente.');
       setTimeout(() => setNotification(''), 5000);
     } finally {
