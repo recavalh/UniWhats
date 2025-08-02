@@ -779,7 +779,7 @@ function App() {
                             variant="secondary" 
                             className={`text-xs ${getDepartmentColor(conversation.department_id)}`}
                           >
-                            {conversation.department?.name || 'Departamento'}
+                            {getDepartmentName(conversation.department_id)}
                           </Badge>
                           
                           {conversation.unread_count > 0 && (
