@@ -591,7 +591,7 @@ async def send_media_message(
         has_access = True
     
     if not has_access:
-        raise HTTPListener(status_code=403, detail="Access denied to this conversation")
+        raise HTTPException(status_code=403, detail="Access denied to this conversation")
     
     try:
         # Read file content
