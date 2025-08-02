@@ -821,27 +821,11 @@ function App() {
                   </div>
                 </ScrollArea>
 
-                {/* Message Input */}
-                <div className="bg-white border-t border-slate-200 p-4">
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm">
-                      <Paperclip className="w-4 h-4" />
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Smile className="w-4 h-4" />
-                    </Button>
-                    <Input
-                      placeholder="Digite sua mensagem..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                      className="flex-1"
-                    />
-                    <Button onClick={sendMessage} disabled={!newMessage.trim()}>
-                      <Send className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
+                {/* Message Composer */}
+                <MessageComposer 
+                  onSendMessage={handleSendMessage}
+                  disabled={!selectedConversation}
+                />
               </div>
 
               {/* Right Sidebar - Contact Info */}
