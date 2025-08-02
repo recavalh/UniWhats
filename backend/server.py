@@ -412,7 +412,7 @@ async def login(request: LoginRequest):
     return {"user": user, "token": f"mock_token_{user['id']}"}
 
 @app.get("/api/auth/me")
-async def get_current_user(user_id: str = "user_maria"):  # Mock current user
+async def get_current_user(user_id: str = "user_admin"):  # Mock admin user
     user = await db.users.find_one({"id": user_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
