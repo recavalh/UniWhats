@@ -868,3 +868,7 @@ async def test_endpoint():
         return {"status": "ok", "conversation_count": count}
     except Exception as e:
         return {"error": str(e)}
+
+@app.get("/api/health")
+async def health_check():
+    return {"status": "ok", "service": "UniWhats Desk API"}
