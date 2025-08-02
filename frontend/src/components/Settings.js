@@ -74,13 +74,10 @@ const Settings = ({ currentUser, onBack }) => {
 
   const loadData = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-      
       const [usersRes, departmentsRes, whatsappRes] = await Promise.all([
-        fetch(`${API_BASE}/api/admin/users`, { headers }),
-        fetch(`${API_BASE}/api/admin/departments`, { headers }),
-        fetch(`${API_BASE}/api/admin/whatsapp/settings`, { headers })
+        authenticatedFetch(`${API_BASE}/api/admin/users`),
+        authenticatedFetch(`${API_BASE}/api/admin/departments`),
+        authenticatedFetch(`${API_BASE}/api/admin/whatsapp/settings`)
       ]);
 
       const usersData = usersRes.ok ? await usersRes.json() : [];
