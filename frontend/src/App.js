@@ -535,7 +535,7 @@ function App() {
                       <button
                         onClick={() => {
                           setShowUserDropdown(false);
-                          // Could add profile settings here
+                          setCurrentView('profile');
                         }}
                         className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center space-x-2"
                       >
