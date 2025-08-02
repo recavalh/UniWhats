@@ -1025,7 +1025,7 @@ function App() {
                           Atribuir para Usuário
                         </label>
                         <div className="space-y-2">
-                          {users.filter(u => u.department_id === selectedConversation.department_id).map(user => (
+                          {(users || []).filter(u => u.department_id === selectedConversation.department_id).map(user => (
                             <Button
                               key={user.id}
                               variant="outline"
