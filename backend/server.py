@@ -459,6 +459,12 @@ async def forgot_password(request: dict):
     # Mock response - in production, send actual email
     return {"message": "If this email exists, you will receive password reset instructions."}
 
+@app.get("/api/auth/me")
+async def get_current_user_info(request: Request):
+    current_user = await get_current_user(request)
+    current_user.pop('password_hash', None)
+    return clean_document(current_user)
+
 # FIXED: Updated access control rules based on requirements
 @app.get("/api/conversations")
 async def get_conversations(request: Request):
