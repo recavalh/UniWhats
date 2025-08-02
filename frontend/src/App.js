@@ -438,12 +438,28 @@ function App() {
     );
   }
 
+  const handleUserUpdate = (updatedUser) => {
+    setCurrentUser(updatedUser);
+  };
+
   // Show Settings page if selected
   if (currentView === 'settings') {
     return (
       <Settings 
         currentUser={currentUser} 
         onBack={() => setCurrentView('inbox')} 
+      />
+    );
+  }
+
+  // Show Profile page if selected
+  if (currentView === 'profile') {
+    return (
+      <Profile 
+        currentUser={currentUser}
+        users={users}
+        onBack={() => setCurrentView('inbox')}
+        onUserUpdate={handleUserUpdate}
       />
     );
   }
