@@ -459,7 +459,7 @@ async def forgot_password(request: dict):
     # Mock response - in production, send actual email
     return {"message": "If this email exists, you will receive password reset instructions."}
 
-# FIXED: Now filters conversations based on user role and department
+# FIXED: Updated access control rules based on requirements
 @app.get("/api/conversations")
 async def get_conversations(request: Request):
     current_user = await get_current_user(request)
@@ -471,8 +471,13 @@ async def get_conversations(request: Request):
         # Managers can see all conversations
         pass
     elif current_user['role'] == "Receptionist":
-        # Receptionists can see all conversations (they are the first point of contact)
-        pass
+        # Receptionists see new messages (status='open' and unassigned) and messages assigned to them
+        query = {
+            "$or": [
+                {"status": "open", "assigned_user_id": None},  # New/unassigned messages
+                {"assigned_user_id": current_user["id"]}       # Messages assigned to them
+            ]
+        }
     else:
         # Other roles only see conversations assigned to their department or to them
         query = {
