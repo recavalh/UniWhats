@@ -9,6 +9,13 @@ class UniWhatsDeskAPITester:
         self.tests_run = 0
         self.tests_passed = 0
         self.auth_token = None
+        self.critical_issues = {
+            'authentication_bug': False,
+            'profile_editing': False,
+            'whatsapp_integration': False,
+            'role_based_access': False,
+            'media_features': False
+        }
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
         """Run a single API test"""
