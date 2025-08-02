@@ -254,6 +254,16 @@ function App() {
     );
   }
 
+  // Show Settings page if selected
+  if (currentView === 'settings') {
+    return (
+      <Settings 
+        currentUser={currentUser} 
+        onBack={() => setCurrentView('inbox')} 
+      />
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
