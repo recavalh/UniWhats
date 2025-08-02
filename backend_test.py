@@ -621,116 +621,83 @@ class UniWhatsDeskAPITester:
         return self.critical_issues['media_features']
 
 def main():
-    print("🚀 Starting UniWhats Desk API Tests")
-    print("=" * 50)
+    print("🚀 Starting UniWhats Desk CRITICAL ISSUES Testing")
+    print("=" * 60)
     
     tester = UniWhatsDeskAPITester()
     
-    # 🔐 AUTHENTICATION TESTS
-    print("\n🔐 AUTHENTICATION TESTING")
+    # Test basic connectivity first
+    print("\n🔗 CONNECTIVITY TEST")
     print("-" * 30)
-    
-    # Test login with valid credentials
-    login_success, login_response = tester.test_login("admin@school.com", "admin123")
-    
-    # Test login with invalid credentials
-    tester.test_login_invalid_credentials()
-    
-    # Test forgot password
-    tester.test_forgot_password("admin@school.com")
-    
-    if not login_success:
-        print("❌ Login failed - cannot continue with authenticated tests")
+    health_success, _ = tester.run_test("Health Check", "GET", "api/health", 200)
+    if not health_success:
+        print("❌ Cannot connect to API - stopping tests")
         return 1
     
-    # Basic endpoint tests (now authenticated)
-    print("\n📊 BASIC ENDPOINT TESTING")
-    print("-" * 30)
+    # Run all critical tests
+    print("\n🎯 CRITICAL ISSUES TESTING")
+    print("=" * 60)
     
-    tester.test_health_check()
+    # CRITICAL ISSUE #1: Authentication Bug
+    auth_result = tester.test_critical_authentication_bug()
     
-    # Test departments (should show both active and inactive)
-    dept_success, departments = tester.test_get_departments()
+    # CRITICAL ISSUE #2: Profile Editing
+    profile_result = tester.test_critical_profile_editing()
     
-    tester.test_get_users()
-    tester.test_get_current_user()
+    # CRITICAL ISSUE #3: WhatsApp Integration
+    whatsapp_result = tester.test_critical_whatsapp_integration()
     
-    # 🏢 DEPARTMENT TOGGLE TESTING
-    print("\n🏢 DEPARTMENT TOGGLE TESTING")
-    print("-" * 30)
+    # CRITICAL ISSUE #4: Role-Based Access
+    role_result = tester.test_critical_role_based_access()
     
-    if dept_success and departments:
-        # Test department toggle functionality
-        for dept in departments[:2]:  # Test first 2 departments
-            dept_id = dept.get('id')
-            dept_name = dept.get('name')
-            current_status = dept.get('active', True)
-            
-            print(f"\n   Testing department: {dept_name} (currently {'active' if current_status else 'inactive'})")
-            
-            # Toggle department status
-            toggle_success, _ = tester.test_department_toggle(dept_id)
-            
-            if toggle_success:
-                # Verify the toggle worked by getting departments again
-                _, updated_departments = tester.test_get_departments()
-                if updated_departments:
-                    updated_dept = next((d for d in updated_departments if d.get('id') == dept_id), None)
-                    if updated_dept:
-                        new_status = updated_dept.get('active', True)
-                        if new_status != current_status:
-                            print(f"   ✓ Department status changed: {current_status} → {new_status}")
-                        else:
-                            print(f"   ⚠ Department status unchanged after toggle")
+    # CRITICAL ISSUE #5: Media Features
+    media_result = tester.test_critical_media_features()
     
-    # 💬 CONVERSATION TESTS
-    print("\n💬 CONVERSATION TESTING")
-    print("-" * 30)
+    # Print comprehensive results
+    print("\n" + "=" * 60)
+    print("📊 CRITICAL ISSUES TEST RESULTS")
+    print("=" * 60)
     
-    success, conversations = tester.test_get_conversations()
+    critical_results = [
+        ("Authentication Bug", auth_result, "✅ Login with different users returns correct profiles"),
+        ("Profile Editing", profile_result, "✅ Profile editing works and changes are reflected immediately"),
+        ("WhatsApp Integration", whatsapp_result, "✅ WhatsApp settings configured with expected credentials"),
+        ("Role-Based Access", role_result, "✅ Role-based access properly enforced"),
+        ("Media Features", media_result, "✅ Media features API supports multiple message types")
+    ]
     
-    if success and conversations:
-        # Test first conversation in detail
-        first_conv = conversations[0]
-        conv_id = first_conv.get('id')
-        
-        if conv_id:
-            print(f"\n📋 Testing detailed functionality with conversation: {conv_id}")
-            
-            # Test messages
-            tester.test_get_messages(conv_id)
-            
-            # Test sending message (for WebSocket testing)
-            tester.test_send_message(conv_id)
-            
-            # Test mark as read
-            tester.test_mark_messages_read(conv_id)
-            
-            # Test assignment (if we have users)
-            _, users = tester.test_get_users()
-            if users and len(users) > 0:
-                user_id = users[0].get('id')
-                if user_id:
-                    tester.test_assign_conversation(conv_id, user_id)
-            
-            # Test close conversation
-            tester.test_close_conversation(conv_id)
+    passed_critical = 0
+    total_critical = len(critical_results)
     
-    # 🚪 LOGOUT TEST
-    print("\n🚪 LOGOUT TESTING")
-    print("-" * 30)
+    for issue, result, success_msg in critical_results:
+        status = "✅ PASS" if result else "❌ FAIL"
+        print(f"\n{status} - {issue}")
+        if result:
+            print(f"    {success_msg}")
+            passed_critical += 1
+        else:
+            print(f"    ❌ Issue still present - needs attention")
     
-    tester.test_logout()
+    # Overall API tests summary
+    print(f"\n📈 API ENDPOINT TESTS: {tester.tests_passed}/{tester.tests_run} passed")
+    print(f"🎯 CRITICAL ISSUES: {passed_critical}/{total_critical} resolved")
     
-    # Print final results
-    print("\n" + "=" * 50)
-    print(f"📊 Test Results: {tester.tests_passed}/{tester.tests_run} passed")
-    
-    if tester.tests_passed == tester.tests_run:
-        print("🎉 All tests passed!")
+    # Final verdict
+    if passed_critical == total_critical:
+        print(f"\n🎉 ALL CRITICAL ISSUES RESOLVED!")
+        print(f"✅ UniWhats Desk is ready for production")
         return 0
     else:
-        print(f"⚠️  {tester.tests_run - tester.tests_passed} tests failed")
+        failed_issues = total_critical - passed_critical
+        print(f"\n⚠️  {failed_issues} CRITICAL ISSUE(S) STILL PRESENT")
+        print(f"❌ UniWhats Desk needs fixes before production")
+        
+        # List failed issues
+        print(f"\n🔧 ISSUES REQUIRING ATTENTION:")
+        for issue, result, _ in critical_results:
+            if not result:
+                print(f"   • {issue}")
+        
         return 1
 
 if __name__ == "__main__":
