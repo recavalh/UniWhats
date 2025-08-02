@@ -482,7 +482,7 @@ function App() {
                 )}
                 
                 {/* User dropdown */}
-                <div className="relative">
+                <div className="relative user-dropdown">
                   <button
                     onClick={() => setShowUserDropdown(!showUserDropdown)}
                     className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 transition-colors"
