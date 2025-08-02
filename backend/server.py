@@ -919,6 +919,301 @@ async def delete_department_admin(dept_id: str, current_user_id: str = "user_adm
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Department not found")
     
+# WhatsApp Settings and Webhook endpoints
+@app.get("/api/admin/whatsapp/settings")
+async def get_whatsapp_settings(current_user_id: str = "user_admin"):
+    # Check if current user is admin
+    current_user = await db.users.find_one({"id": current_user_id})
+    if not current_user or current_user.get("role") != "Manager":
+        raise HTTPException(status_code=403, detail="Access denied. Admin role required.")
+    
+    # Get WhatsApp settings from database
+    settings = await db.whatsapp_settings.find_one({"type": "credentials"})
+    
+    if not settings:
+        # Return empty settings if none exist
+        return {
+            "phone_number_id": "",
+            "business_account_id": "",
+            "api_token": "",
+            "verify_token": "",
+            "webhook_url": f"{os.environ.get('APP_BASE_URL', 'https://your-domain.com')}/webhooks/whatsapp",
+            "configured": False
+        }
+    
+    # Mask sensitive tokens for display
+    masked_settings = {
+        "phone_number_id": settings.get("phone_number_id", ""),
+        "business_account_id": settings.get("business_account_id", ""),
+        "api_token": "••••••••" + settings.get("api_token", "")[-4:] if settings.get("api_token") else "",
+        "verify_token": "••••••••" + settings.get("verify_token", "")[-4:] if settings.get("verify_token") else "",
+        "webhook_url": f"{os.environ.get('APP_BASE_URL', 'https://your-domain.com')}/webhooks/whatsapp",
+        "configured": bool(settings.get("api_token") and settings.get("verify_token"))
+    }
+    
+    return clean_document(masked_settings)
+
+@app.post("/api/admin/whatsapp/settings")
+async def save_whatsapp_settings(settings_data: dict, current_user_id: str = "user_admin"):
+    # Check if current user is admin
+    current_user = await db.users.find_one({"id": current_user_id})
+    if not current_user or current_user.get("role") != "Manager":
+        raise HTTPException(status_code=403, detail="Access denied. Admin role required.")
+    
+    # Validate required fields
+    required_fields = ["phone_number_id", "business_account_id", "api_token", "verify_token"]
+    for field in required_fields:
+        if not settings_data.get(field, "").strip():
+            raise HTTPException(status_code=400, detail=f"Field '{field}' is required")
+    
+    # Prepare settings for storage
+    whatsapp_settings = {
+        "_id": "whatsapp_credentials",
+        "type": "credentials",
+        "phone_number_id": settings_data["phone_number_id"].strip(),
+        "business_account_id": settings_data["business_account_id"].strip(),
+        "api_token": settings_data["api_token"].strip(),
+        "verify_token": settings_data["verify_token"].strip(),
+        "updated_at": datetime.now(),
+        "updated_by": current_user_id
+    }
+    
+    # Store or update settings
+    await db.whatsapp_settings.replace_one(
+        {"type": "credentials"},
+        whatsapp_settings,
+        upsert=True
+    )
+    
+    # Set environment variables for immediate use
+    os.environ["WHATSAPP_PHONE_NUMBER_ID"] = whatsapp_settings["phone_number_id"]
+    os.environ["WHATSAPP_BUSINESS_ACCOUNT_ID"] = whatsapp_settings["business_account_id"]
+    os.environ["WHATSAPP_API_TOKEN"] = whatsapp_settings["api_token"]
+    os.environ["WHATSAPP_VERIFY_TOKEN"] = whatsapp_settings["verify_token"]
+    
+    return {"success": True, "message": "WhatsApp settings saved successfully"}
+
+@app.post("/api/admin/whatsapp/test-connection")
+async def test_whatsapp_connection(current_user_id: str = "user_admin"):
+    # Check if current user is admin
+    current_user = await db.users.find_one({"id": current_user_id})
+    if not current_user or current_user.get("role") != "Manager":
+        raise HTTPException(status_code=403, detail="Access denied. Admin role required.")
+    
+    # Get settings
+    settings = await db.whatsapp_settings.find_one({"type": "credentials"})
+    if not settings or not settings.get("api_token"):
+        raise HTTPException(status_code=400, detail="WhatsApp credentials not configured")
+    
+    # Test WhatsApp API connection
+    try:
+        import httpx
+        async with httpx.AsyncClient() as client:
+            headers = {
+                "Authorization": f"Bearer {settings['api_token']}",
+                "Content-Type": "application/json"
+            }
+            
+            # Test by getting business account info
+            response = await client.get(
+                f"https://graph.facebook.com/v17.0/{settings['business_account_id']}",
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                return {"success": True, "message": "WhatsApp API connection successful"}
+            else:
+                return {"success": False, "message": f"API test failed: {response.text}"}
+                
+    except Exception as e:
+        return {"success": False, "message": f"Connection test failed: {str(e)}"}
+
+# WhatsApp Webhook endpoints
+@app.get("/webhooks/whatsapp")
+async def whatsapp_webhook_verify(request: Request):
+    # Get query parameters
+    mode = request.query_params.get("hub.mode")
+    token = request.query_params.get("hub.verify_token")
+    challenge = request.query_params.get("hub.challenge")
+    
+    # Get stored verify token
+    settings = await db.whatsapp_settings.find_one({"type": "credentials"})
+    stored_token = settings.get("verify_token") if settings else None
+    
+    # Verify the webhook
+    if mode == "subscribe" and token == stored_token:
+        print(f"✅ WhatsApp webhook verified successfully")
+        return int(challenge)
+    else:
+        print(f"❌ WhatsApp webhook verification failed")
+        print(f"   Mode: {mode}, Token match: {token == stored_token}")
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+@app.post("/webhooks/whatsapp")
+async def whatsapp_webhook_handler(request: Request):
+    try:
+        # Get the raw body
+        body = await request.body()
+        data = json.loads(body.decode('utf-8'))
+        
+        print(f"📨 WhatsApp webhook received: {json.dumps(data, indent=2)}")
+        
+        # Process webhook data
+        if "entry" in data:
+            for entry in data["entry"]:
+                if "changes" in entry:
+                    for change in entry["changes"]:
+                        if change.get("field") == "messages":
+                            await process_whatsapp_message(change.get("value", {}))
+        
+        return {"status": "success"}
+        
+    except Exception as e:
+        print(f"❌ Error processing WhatsApp webhook: {str(e)}")
+        raise HTTPException(status_code=500, detail="Webhook processing failed")
+
+async def process_whatsapp_message(message_data):
+    """Process incoming WhatsApp message and create conversation/message records"""
+    try:
+        if "messages" not in message_data:
+            return
+            
+        for message in message_data["messages"]:
+            wa_id = message.get("from")
+            phone_number = f"+{wa_id}"
+            message_text = ""
+            message_type = "text"
+            media_url = None
+            
+            # Extract message content based on type
+            if "text" in message:
+                message_text = message["text"]["body"]
+            elif "image" in message:
+                message_type = "image"
+                message_text = message["image"].get("caption", "📷 Image")
+                media_url = message["image"].get("link")
+            elif "document" in message:
+                message_type = "document"
+                message_text = f"📄 {message['document'].get('filename', 'Document')}"
+                media_url = message["document"].get("link")
+            
+            # Get or create contact
+            contact = await db.contacts.find_one({"wa_id": wa_id})
+            if not contact:
+                contact = {
+                    "_id": f"contact_{uuid.uuid4().hex[:8]}",
+                    "id": f"contact_{uuid.uuid4().hex[:8]}",
+                    "wa_id": wa_id,
+                    "phone": phone_number,
+                    "name": f"Contact {wa_id[-4:]}",
+                    "tags": ["whatsapp"],
+                    "custom_fields": {},
+                    "created_at": datetime.now()
+                }
+                await db.contacts.insert_one(contact)
+            
+            # Get or create conversation
+            conversation = await db.conversations.find_one({
+                "contact_id": contact["id"],
+                "status": "open"
+            })
+            
+            if not conversation:
+                conversation = {
+                    "_id": f"conv_{uuid.uuid4().hex[:8]}",
+                    "id": f"conv_{uuid.uuid4().hex[:8]}",
+                    "contact_id": contact["id"],
+                    "department_id": "dept_reception",  # Default to reception
+                    "status": "open",
+                    "assignee_user_id": None,
+                    "created_at": datetime.now(),
+                    "updated_at": datetime.now(),
+                    "last_message_at": datetime.now(),
+                    "sla_due_at": datetime.now() + timedelta(hours=4),
+                    "tags": ["whatsapp"]
+                }
+                await db.conversations.insert_one(conversation)
+            
+            # Create message record
+            new_message = {
+                "_id": f"msg_{uuid.uuid4().hex[:8]}",
+                "id": f"msg_{uuid.uuid4().hex[:8]}",
+                "conversation_id": conversation["id"],
+                "direction": "in",
+                "body": message_text,
+                "type": message_type,
+                "media_url": media_url,
+                "timestamp": datetime.now(),
+                "sender_user_id": None,
+                "read_status": False,
+                "whatsapp_message_id": message.get("id")
+            }
+            
+            await db.messages.insert_one(new_message)
+            
+            # Update conversation
+            await db.conversations.update_one(
+                {"id": conversation["id"]},
+                {
+                    "$set": {
+                        "last_message_at": datetime.now(),
+                        "updated_at": datetime.now()
+                    }
+                }
+            )
+            
+            # Broadcast to WebSocket clients
+            await manager.broadcast({
+                "type": "new_message",
+                "conversation_id": conversation["id"],
+                "message": clean_document(new_message)
+            })
+            
+            print(f"✅ Processed WhatsApp message from {wa_id}: {message_text[:50]}...")
+            
+    except Exception as e:
+        print(f"❌ Error processing WhatsApp message: {str(e)}")
+
+async def send_whatsapp_message(phone_number: str, message: str):
+    """Send message via WhatsApp Cloud API"""
+    try:
+        settings = await db.whatsapp_settings.find_one({"type": "credentials"})
+        if not settings or not settings.get("api_token"):
+            raise Exception("WhatsApp credentials not configured")
+        
+        import httpx
+        async with httpx.AsyncClient() as client:
+            headers = {
+                "Authorization": f"Bearer {settings['api_token']}",
+                "Content-Type": "application/json"
+            }
+            
+            # Clean phone number (remove + and formatting)
+            clean_phone = phone_number.replace("+", "").replace("-", "").replace(" ", "")
+            
+            payload = {
+                "messaging_product": "whatsapp",
+                "to": clean_phone,
+                "text": {"body": message}
+            }
+            
+            response = await client.post(
+                f"https://graph.facebook.com/v17.0/{settings['phone_number_id']}/messages",
+                headers=headers,
+                json=payload
+            )
+            
+            if response.status_code == 200:
+                print(f"✅ WhatsApp message sent to {phone_number}")
+                return {"success": True}
+            else:
+                print(f"❌ Failed to send WhatsApp message: {response.text}")
+                return {"success": False, "error": response.text}
+                
+    except Exception as e:
+        print(f"❌ Error sending WhatsApp message: {str(e)}")
+        return {"success": False, "error": str(e)}
+
     return {"success": True}
 
 @app.get("/api/test")
