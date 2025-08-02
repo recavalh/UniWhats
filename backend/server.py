@@ -24,16 +24,22 @@ app.add_middleware(
 
 # Mock data
 def clean_document(doc: dict) -> dict:
-    """Clean MongoDB document for JSON serialization - convert datetime objects"""
+    """Clean MongoDB document for JSON serialization - convert datetime objects and ObjectIds"""
     if doc is None:
         return None
     
     cleaned = {}
     for key, value in doc.items():
-        if isinstance(value, datetime):
+        if key == '_id':
+            # Skip MongoDB's internal _id field
+            continue
+        elif isinstance(value, datetime):
             cleaned[key] = value.isoformat()
+        elif hasattr(value, '__dict__') and hasattr(value, 'binary'):
+            # Handle ObjectId and similar MongoDB types
+            cleaned[key] = str(value)
         elif isinstance(value, list):
-            cleaned[key] = [clean_document(item) if isinstance(item, dict) else item for item in value]
+            cleaned[key] = [clean_document(item) if isinstance(item, dict) else (str(item) if hasattr(item, '__dict__') and hasattr(item, 'binary') else item) for item in value]
         elif isinstance(value, dict):
             cleaned[key] = clean_document(value)
         else:
