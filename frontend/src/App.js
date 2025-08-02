@@ -67,6 +67,18 @@ function App() {
     }
   }, [isAuthenticated, currentUser]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserDropdown && !event.target.closest('.user-dropdown')) {
+        setShowUserDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUserDropdown]);
+
   const checkExistingAuth = () => {
     const token = localStorage.getItem('auth_token');
     const userData = localStorage.getItem('user_data');
