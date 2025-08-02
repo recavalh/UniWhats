@@ -206,7 +206,7 @@ async def init_mock_data():
             "id": "user_maria",
             "name": "Maria Silva",
             "email": "maria@school.com",
-            "password_hash": bcrypt.hashpw("admin123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
+            "password_hash": bcrypt.hashpw("maria123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
             "role": "Receptionist",
             "department_id": "dept_reception",
             "avatar": "https://images.unsplash.com/photo-1494790108755-2616b7b6ca85?w=150&h=150&fit=crop&crop=face"
