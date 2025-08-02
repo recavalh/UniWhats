@@ -450,6 +450,12 @@ function App() {
             
             {currentUser && (
               <div className="flex items-center space-x-3">
+                {/* WebSocket connection status */}
+                <div className="flex items-center space-x-2 text-sm text-slate-600">
+                  <div className={`w-2 h-2 rounded-full ${wsConnection ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <span>{wsConnection ? 'Conectado' : 'Desconectado'}</span>
+                </div>
+                
                 {/* Settings button for Admin users */}
                 {currentUser.role === 'Manager' && (
                   <Button 
@@ -463,13 +469,56 @@ function App() {
                   </Button>
                 )}
                 
-                <div className="text-right">
-                  <p className="text-sm font-medium text-slate-900">{currentUser.name}</p>
-                  <p className="text-xs text-slate-500">{currentUser.role}</p>
+                {/* User dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowUserDropdown(!showUserDropdown)}
+                    className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                  >
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-slate-900">{currentUser.name}</p>
+                      <p className="text-xs text-slate-500">{currentUser.role}</p>
+                    </div>
+                    <Avatar className="w-8 h-8">
+                      <img src={currentUser.avatar} alt={currentUser.name} className="rounded-full" />
+                    </Avatar>
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  </button>
+                  
+                  {/* Dropdown menu */}
+                  {showUserDropdown && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+                      <div className="px-4 py-2 border-b border-slate-200">
+                        <p className="font-medium text-slate-900">{currentUser.name}</p>
+                        <p className="text-sm text-slate-500">{currentUser.email}</p>
+                      </div>
+                      
+                      <button
+                        onClick={() => {
+                          setShowUserDropdown(false);
+                          // Could add profile settings here
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center space-x-2"
+                      >
+                        <User className="w-4 h-4" />
+                        <span>Perfil</span>
+                      </button>
+                      
+                      <div className="border-t border-slate-200 mt-1 pt-1">
+                        <button
+                          onClick={() => {
+                            setShowUserDropdown(false);
+                            handleLogout();
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Sair</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <Avatar className="w-8 h-8">
-                  <img src={currentUser.avatar} alt={currentUser.name} className="rounded-full" />
-                </Avatar>
               </div>
             )}
           </div>
