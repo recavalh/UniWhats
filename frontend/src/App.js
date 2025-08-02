@@ -826,9 +826,21 @@ function App() {
                         </div>
                       </Avatar>
                       <div>
-                        <h2 className="font-semibold text-slate-900">
-                          {selectedConversation.contact?.name || 'Contato Desconhecido'}
-                        </h2>
+                        <div className="flex items-center space-x-2">
+                          <h2 className="font-semibold text-slate-900">
+                            {selectedConversation.contact?.name || 'Contato Desconhecido'}
+                          </h2>
+                          {selectedConversation.status === 'closed' && (
+                            <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
+                              Fechada
+                            </Badge>
+                          )}
+                          {selectedConversation.status === 'open' && (
+                            <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                              Aberta
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-slate-500">
                           {selectedConversation.contact?.phone}
                         </p>
