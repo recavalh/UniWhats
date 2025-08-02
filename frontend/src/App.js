@@ -1055,16 +1055,27 @@ function App() {
                       <Separator />
 
                       <div className="space-y-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={closeConversation}
-                          disabled={selectedConversation.status === 'closed'}
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Fechar Conversa
-                        </Button>
+                        {selectedConversation.status === 'closed' ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full border-green-200 text-green-700 hover:bg-green-50"
+                            onClick={reopenConversation}
+                          >
+                            <CheckSquare className="w-4 h-4 mr-2" />
+                            Reabrir Conversa
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full border-red-200 text-red-700 hover:bg-red-50"
+                            onClick={closeConversation}
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            Fechar Conversa
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </TabsContent>
