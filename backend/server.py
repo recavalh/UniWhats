@@ -459,9 +459,11 @@ async def get_current_user(request: Request):
         if token.startswith("uniwhats_"):
             try:
                 # Extract user ID from token format: uniwhats_{user_id}_{random}
+                # Token format is: uniwhats_user_admin_random or uniwhats_user_maria_random
                 parts = token.split("_")
-                if len(parts) >= 3:
-                    user_id = parts[1]
+                if len(parts) >= 4:
+                    # Reconstruct user_id from parts 1 and 2: user_admin, user_maria, etc.
+                    user_id = f"{parts[1]}_{parts[2]}"
                     user = await db.users.find_one({"id": user_id})
                     if user:
                         user.pop("password_hash", None)
