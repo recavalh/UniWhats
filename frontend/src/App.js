@@ -516,7 +516,7 @@ function App() {
     return colors[deptId] || 'bg-gray-100 text-gray-800';
   };
 
-  const filteredConversations = conversations.filter(conv => {
+  const filteredConversations = (conversations || []).filter(conv => {
     if (filter === 'unassigned' && conv.assignee_user_id) return false;
     if (filter === 'mine' && conv.assignee_user_id !== currentUser?.id) return false;
     if (filter !== 'all' && filter !== 'unassigned' && filter !== 'mine' && conv.department_id !== filter) return false;
