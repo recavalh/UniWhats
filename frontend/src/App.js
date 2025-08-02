@@ -168,15 +168,15 @@ function App() {
       ]);
 
       const [convData, deptData, usersData, userData] = await Promise.all([
-        conversationsRes.json(),
-        departmentsRes.json(),
-        usersRes.json(),
-        currentUserRes.json()
+        conversationsRes.ok ? conversationsRes.json() : [],
+        departmentsRes.ok ? departmentsRes.json() : [],
+        usersRes.ok ? usersRes.json() : [],
+        currentUserRes.ok ? currentUserRes.json() : null
       ]);
 
-      setConversations(convData);
-      setDepartments(deptData);
-      setUsers(usersData);
+      setConversations(Array.isArray(convData) ? convData : []);
+      setDepartments(Array.isArray(deptData) ? deptData : []);
+      setUsers(Array.isArray(usersData) ? usersData : []);
       setCurrentUser(userData);
       setLoading(false);
 
