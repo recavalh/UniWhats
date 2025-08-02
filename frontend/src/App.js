@@ -411,25 +411,32 @@ function App() {
     if (!selectedConversation) return;
 
     try {
-      await fetch(`${API_BASE}/api/conversations/${selectedConversation.id}/assign`, {
+      const response = await fetch(`${API_BASE}/api/conversations/${selectedConversation.id}/assign`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
-          assignee_user_id: assigneeId,
+          user_id: assigneeId,
           department_id: departmentId
         })
       });
 
-      await loadConversations();
-      // Update selected conversation 
-      const updatedConv = conversations.find(c => c.id === selectedConversation.id);
-      if (updatedConv) {
-        setSelectedConversation(updatedConv);
+      if (response.ok) {
+        await loadConversations();
+        // Update selected conversation 
+        const updatedConv = conversations.find(c => c.id === selectedConversation.id);
+        if (updatedConv) {
+          setSelectedConversation(updatedConv);
+        }
+        alert('Conversa atribuída com sucesso!');
+      } else {
+        throw new Error('Failed to assign conversation');
       }
     } catch (error) {
       console.error('Error assigning conversation:', error);
+      alert('Erro ao atribuir conversa. Tente novamente.');
     }
   };
 
