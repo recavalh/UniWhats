@@ -150,23 +150,21 @@ const Settings = ({ currentUser, onBack }) => {
     }
   };
 
-  const handleDeleteDept = async (deptId) => {
-    if (!confirm('Tem certeza que deseja excluir este departamento?')) return;
-
+  const handleToggleDept = async (deptId) => {
     try {
-      const response = await fetch(`${API_BASE}/api/admin/departments/${deptId}`, {
-        method: 'DELETE'
+      const response = await fetch(`${API_BASE}/api/admin/departments/${deptId}/toggle`, {
+        method: 'POST'
       });
 
       if (response.ok) {
         await loadData();
       } else {
         const error = await response.json();
-        alert(error.detail || 'Error deleting department');
+        alert(error.detail || 'Error toggling department status');
       }
     } catch (error) {
-      console.error('Error deleting department:', error);
-      alert('Error deleting department');
+      console.error('Error toggling department:', error);
+      alert('Error toggling department status');
     }
   };
 
