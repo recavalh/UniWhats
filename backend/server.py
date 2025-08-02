@@ -490,13 +490,21 @@ async def update_user_profile(user_id: str, profile_data: dict, request: Request
         token = authorization.replace("Bearer ", "")
         if token.startswith("uniwhats_"):
             try:
-                current_user_id = token.split("_")[1]
-            except:
-                pass
+                # Extract user ID from token format: uniwhats_user_admin_random
+                parts = token.split("_")
+                if len(parts) >= 4:
+                    # Reconstruct user_id from parts 1 and 2: user_admin, user_maria, etc.
+                    current_user_id = f"{parts[1]}_{parts[2]}"
+                    print(f"✅ Profile update - extracted user_id: {current_user_id}")
+                else:
+                    print(f"❌ Profile update - invalid token format: {token}")
+            except Exception as e:
+                print(f"❌ Profile update - token parsing error: {e}")
     
     # Users can only edit their own profile (or admin can edit any)
     current_user = await db.users.find_one({"id": current_user_id})
     if not current_user:
+        print(f"❌ Profile update - user not found for ID: {current_user_id}")
         raise HTTPException(status_code=401, detail="Unauthorized")
     
     if current_user_id != user_id and current_user.get("role") != "Manager":
