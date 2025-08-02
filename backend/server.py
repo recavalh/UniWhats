@@ -409,7 +409,45 @@ async def login(request: LoginRequest):
     
     # Remove password hash from response
     user.pop("password_hash")
-    return {"user": user, "token": f"mock_token_{user['id']}"}
+    
+    # Create a simple JWT-like token (in production, use proper JWT)
+    token = f"uniwhats_{user['id']}_{uuid.uuid4().hex[:16]}"
+    
+    return {"user": clean_document(user), "token": token}
+
+@app.post("/api/auth/forgot-password")
+async def forgot_password(email_data: dict):
+    email = email_data.get("email")
+    user = await db.users.find_one({"email": email})
+    
+    if not user:
+        # Don't reveal if email exists or not for security
+        return {"success": True, "message": "If the email exists, a reset link has been sent."}
+    
+    # Generate temporary password
+    temp_password = f"temp{uuid.uuid4().hex[:8]}"
+    password_hash = bcrypt.hashpw(temp_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    # Update password
+    await db.users.update_one(
+        {"email": email},
+        {"$set": {"password_hash": password_hash, "password_reset_required": True}}
+    )
+    
+    # Mock email sending
+    print(f"📧 Password reset email sent to {email}")
+    print(f"   Temporary password: {temp_password}")
+    
+    return {
+        "success": True, 
+        "message": "If the email exists, a reset link has been sent.",
+        "temp_password": temp_password  # In production, don't return this
+    }
+
+@app.post("/api/auth/logout")
+async def logout():
+    # In a real app, you'd invalidate the token here
+    return {"success": True, "message": "Logged out successfully"}
 
 @app.get("/api/auth/me")
 async def get_current_user(user_id: str = "user_admin"):  # Mock admin user
