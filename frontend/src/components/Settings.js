@@ -188,24 +188,59 @@ const Settings = ({ currentUser, onBack }) => {
     }
   };
 
-  const handleDeleteDept = async (deptId) => {
-    if (!confirm('Tem certeza que deseja excluir este departamento?')) return;
-
+  const handleWhatsappSubmit = async (e) => {
+    e.preventDefault();
+    
     try {
-      const response = await fetch(`${API_BASE}/api/admin/departments/${deptId}`, {
-        method: 'DELETE'
+      const response = await fetch(`${API_BASE}/api/admin/whatsapp/settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(whatsappFormData)
       });
 
       if (response.ok) {
+        const result = await response.json();
+        setNotification(result.message || 'WhatsApp settings saved successfully!');
         await loadData();
+        setTimeout(() => setNotification(''), 3000);
       } else {
         const error = await response.json();
-        alert(error.detail || 'Error deleting department');
+        alert(error.detail || 'Error saving WhatsApp settings');
       }
     } catch (error) {
-      console.error('Error deleting department:', error);
-      alert('Error deleting department');
+      console.error('Error saving WhatsApp settings:', error);
+      alert('Error saving WhatsApp settings');
     }
+  };
+
+  const handleTestConnection = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/whatsapp/test-connection`, {
+        method: 'POST'
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setNotification('✅ WhatsApp API connection successful!');
+      } else {
+        setNotification(`❌ Connection failed: ${result.message}`);
+      }
+      
+      setTimeout(() => setNotification(''), 5000);
+    } catch (error) {
+      console.error('Error testing connection:', error);
+      setNotification('❌ Connection test failed');
+      setTimeout(() => setNotification(''), 5000);
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    setNotification('📋 Copied to clipboard!');
+    setTimeout(() => setNotification(''), 2000);
   };
 
   const handleResetPassword = async (userId) => {
