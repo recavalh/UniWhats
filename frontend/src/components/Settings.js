@@ -567,6 +567,209 @@ const Settings = ({ currentUser, onBack }) => {
               ))}
             </div>
           </TabsContent>
+          {/* WhatsApp Tab */}
+          <TabsContent value="whatsapp" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium text-slate-900">Configurações do WhatsApp</h3>
+                <p className="text-sm text-slate-500">Configure a integração com WhatsApp Business API</p>
+              </div>
+              {whatsappSettings.configured && (
+                <Badge variant="default" className="bg-green-100 text-green-800">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Configurado
+                </Badge>
+              )}
+            </div>
+
+            <Card className="p-6">
+              <form onSubmit={handleWhatsappSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <Phone className="w-4 h-4 inline mr-2" />
+                      WhatsApp Phone Number ID
+                    </label>
+                    <Input
+                      value={whatsappFormData.phone_number_id || ''}
+                      onChange={(e) => setWhatsappFormData({ 
+                        ...whatsappFormData, 
+                        phone_number_id: e.target.value 
+                      })}
+                      placeholder="Enter Phone Number ID"
+                      required
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      From Meta Business Manager → WhatsApp API → Phone Numbers
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <Building className="w-4 h-4 inline mr-2" />
+                      WhatsApp Business Account ID
+                    </label>
+                    <Input
+                      value={whatsappFormData.business_account_id || ''}
+                      onChange={(e) => setWhatsappFormData({ 
+                        ...whatsappFormData, 
+                        business_account_id: e.target.value 
+                      })}
+                      placeholder="Enter Business Account ID"
+                      required
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      From Meta Business Manager → Business Settings → Accounts
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <Key className="w-4 h-4 inline mr-2" />
+                      WhatsApp API Token
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type={showTokens.api_token ? 'text' : 'password'}
+                        value={whatsappFormData.api_token || ''}
+                        onChange={(e) => setWhatsappFormData({ 
+                          ...whatsappFormData, 
+                          api_token: e.target.value 
+                        })}
+                        placeholder="Enter API Token"
+                        className="pr-10"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                        onClick={() => setShowTokens({ 
+                          ...showTokens, 
+                          api_token: !showTokens.api_token 
+                        })}
+                      >
+                        {showTokens.api_token ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">
+                      From Meta Business Manager → System Users → Generate Token
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <Shield className="w-4 h-4 inline mr-2" />
+                      Webhook Verify Token
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type={showTokens.verify_token ? 'text' : 'password'}
+                        value={whatsappFormData.verify_token || ''}
+                        onChange={(e) => setWhatsappFormData({ 
+                          ...whatsappFormData, 
+                          verify_token: e.target.value 
+                        })}
+                        placeholder="Enter Verify Token"
+                        className="pr-10"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                        onClick={() => setShowTokens({ 
+                          ...showTokens, 
+                          verify_token: !showTokens.verify_token 
+                        })}
+                      >
+                        {showTokens.verify_token ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Custom token for webhook verification (create your own)
+                    </p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Webhook URL Section */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <Globe className="w-4 h-4 inline mr-2" />
+                    Webhook URL (Read-only)
+                  </label>
+                  <div className="flex space-x-2">
+                    <Input
+                      value={whatsappSettings.webhook_url || ''}
+                      readOnly
+                      className="bg-slate-50"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => copyToClipboard(whatsappSettings.webhook_url || '')}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+                    <p className="text-sm text-blue-800">
+                      <strong>📋 Instruções:</strong> Copie esta URL e cole no Meta Business Manager → 
+                      WhatsApp API → Configuration → Webhook URL. Selecione os eventos "messages" e "message_deliveries".
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex justify-between pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleTestConnection}
+                    disabled={!whatsappSettings.configured}
+                    className="flex items-center space-x-2"
+                  >
+                    <TestTube className="w-4 h-4" />
+                    <span>Testar Conexão</span>
+                  </Button>
+
+                  <Button
+                    type="submit"
+                    className="bg-green-600 hover:bg-green-700 flex items-center space-x-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Salvar Configurações</span>
+                  </Button>
+                </div>
+              </form>
+            </Card>
+
+            {/* Connection Status */}
+            <Card className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-3 h-3 rounded-full ${
+                    whatsappSettings.configured ? 'bg-green-500' : 'bg-red-500'
+                  }`}></div>
+                  <div>
+                    <p className="font-medium text-slate-900">
+                      Status da Integração
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      {whatsappSettings.configured 
+                        ? 'WhatsApp Business API configurado e ativo' 
+                        : 'Configure as credenciais para ativar a integração'
+                      }
+                    </p>
+                  </div>
+                </div>
+                {whatsappSettings.configured && (
+                  <Badge variant="default" className="bg-green-100 text-green-800">
+                    Ativo
+                  </Badge>
+                )}
+              </div>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
