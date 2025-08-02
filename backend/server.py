@@ -765,6 +765,102 @@ async def update_conversation_tags(conversation_id: str, tag_request: TagRequest
     
     return {"message": "Tags updated successfully", "tags": tag_request.tags}
 
+# NEW: Close conversation endpoint
+@app.post("/api/conversations/{conversation_id}/close")
+async def close_conversation(conversation_id: str, request: Request):
+    current_user = await get_current_user(request)
+    
+    # Check conversation access
+    conversation = await db.conversations.find_one({"id": conversation_id})
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    has_access = False
+    if current_user['role'] in ["Manager", "Receptionist"]:
+        has_access = True
+    elif (conversation.get("department_id") == current_user.get("department_id") or 
+          conversation.get("assigned_user_id") == current_user["id"]):
+        has_access = True
+    
+    if not has_access:
+        raise HTTPException(status_code=403, detail="Access denied to this conversation")
+    
+    # Update conversation status to closed
+    await db.conversations.update_one(
+        {"id": conversation_id},
+        {"$set": {"status": "closed", "updated_at": datetime.now()}}
+    )
+    
+    # Add a system message indicating the conversation was closed
+    close_message = {
+        "id": f"msg_{uuid.uuid4().hex[:8]}",
+        "conversation_id": conversation_id,
+        "direction": "system",
+        "body": f"Conversa fechada por {current_user['name']}",
+        "type": "system",
+        "timestamp": datetime.now(),
+        "sender_user_id": current_user["id"],
+        "read_status": True
+    }
+    
+    await db.messages.insert_one(close_message)
+    
+    await manager.broadcast({
+        "type": "conversation_closed",
+        "conversation_id": conversation_id,
+        "closed_by": current_user["name"]
+    })
+    
+    return {"message": "Conversation closed successfully", "status": "closed"}
+
+# NEW: Reopen conversation endpoint
+@app.post("/api/conversations/{conversation_id}/reopen")
+async def reopen_conversation(conversation_id: str, request: Request):
+    current_user = await get_current_user(request)
+    
+    # Check conversation access
+    conversation = await db.conversations.find_one({"id": conversation_id})
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    has_access = False
+    if current_user['role'] in ["Manager", "Receptionist"]:
+        has_access = True
+    elif (conversation.get("department_id") == current_user.get("department_id") or 
+          conversation.get("assigned_user_id") == current_user["id"]):
+        has_access = True
+    
+    if not has_access:
+        raise HTTPException(status_code=403, detail="Access denied to this conversation")
+    
+    # Update conversation status to open
+    await db.conversations.update_one(
+        {"id": conversation_id},
+        {"$set": {"status": "open", "updated_at": datetime.now()}}
+    )
+    
+    # Add a system message indicating the conversation was reopened
+    reopen_message = {
+        "id": f"msg_{uuid.uuid4().hex[:8]}",
+        "conversation_id": conversation_id,
+        "direction": "system",
+        "body": f"Conversa reaberta por {current_user['name']}",
+        "type": "system",
+        "timestamp": datetime.now(),
+        "sender_user_id": current_user["id"],
+        "read_status": True
+    }
+    
+    await db.messages.insert_one(reopen_message)
+    
+    await manager.broadcast({
+        "type": "conversation_reopened",
+        "conversation_id": conversation_id,
+        "reopened_by": current_user["name"]
+    })
+    
+    return {"message": "Conversation reopened successfully", "status": "open"}
+
 @app.put("/api/users/profile")
 async def update_my_profile(profile_data: dict, request: Request):
     # Extract current user from token
