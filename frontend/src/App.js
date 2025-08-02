@@ -435,15 +435,55 @@ function App() {
 
   const closeConversation = async () => {
     if (!selectedConversation) return;
-
+    
     try {
-      await fetch(`${API_BASE}/api/conversations/${selectedConversation.id}/close`, {
-        method: 'POST'
+      const response = await fetch(`${API_BASE}/api/conversations/${selectedConversation.id}/close`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
       });
 
-      await loadConversations();
+      if (response.ok) {
+        // Update local state
+        setSelectedConversation(prev => prev ? {...prev, status: 'closed'} : null);
+        await loadConversations();
+        
+        // Show success message
+        alert('Conversa fechada com sucesso!');
+      } else {
+        throw new Error('Failed to close conversation');
+      }
     } catch (error) {
       console.error('Error closing conversation:', error);
+      alert('Erro ao fechar conversa. Tente novamente.');
+    }
+  };
+
+  const reopenConversation = async () => {
+    if (!selectedConversation) return;
+    
+    try {
+      const response = await fetch(`${API_BASE}/api/conversations/${selectedConversation.id}/reopen`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      if (response.ok) {
+        // Update local state
+        setSelectedConversation(prev => prev ? {...prev, status: 'open'} : null);
+        await loadConversations();
+        
+        // Show success message
+        alert('Conversa reaberta com sucesso!');
+      } else {
+        throw new Error('Failed to reopen conversation');
+      }
+    } catch (error) {
+      console.error('Error reopening conversation:', error);
+      alert('Erro ao reabrir conversa. Tente novamente.');
     }
   };
 
