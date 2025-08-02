@@ -596,8 +596,7 @@ const Settings = ({ currentUser, onBack }) => {
                         ...whatsappFormData, 
                         phone_number_id: e.target.value 
                       })}
-                      placeholder="Enter Phone Number ID"
-                      required
+                      placeholder="Digite o Phone Number ID (opcional)"
                     />
                     <p className="text-xs text-slate-500 mt-1">
                       From Meta Business Manager → WhatsApp API → Phone Numbers
