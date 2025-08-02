@@ -4,6 +4,7 @@ import Login from './components/Login';
 import Settings from './components/Settings';
 import Profile from './components/Profile';
 import MessageComposer from './components/MessageComposer';
+import TagManager from './components/TagManager';
 import { Card } from './components/ui/card';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
