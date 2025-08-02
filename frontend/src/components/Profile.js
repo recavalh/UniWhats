@@ -40,7 +40,7 @@ const Profile = ({ currentUser, users = [], onBack, onUserUpdate }) => {
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${API_BASE}/api/users/${currentUser.id}/profile`, {
+      const response = await fetch(`${API_BASE}/api/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
