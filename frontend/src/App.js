@@ -737,7 +737,7 @@ function App() {
           {/* Conversations List */}
           <ScrollArea className="flex-1">
             <div className="p-2">
-              {filteredConversations.map((conversation) => (
+              {(filteredConversations || []).map((conversation) => (
                 <Card 
                   key={conversation.id}
                   className={`p-3 mb-2 cursor-pointer transition-all hover:shadow-md ${
