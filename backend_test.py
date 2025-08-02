@@ -273,13 +273,67 @@ def main():
     
     tester = UniWhatsDeskAPITester()
     
-    # Basic endpoint tests
+    # 🔐 AUTHENTICATION TESTS
+    print("\n🔐 AUTHENTICATION TESTING")
+    print("-" * 30)
+    
+    # Test login with valid credentials
+    login_success, login_response = tester.test_login("admin@school.com", "admin123")
+    
+    # Test login with invalid credentials
+    tester.test_login_invalid_credentials()
+    
+    # Test forgot password
+    tester.test_forgot_password("admin@school.com")
+    
+    if not login_success:
+        print("❌ Login failed - cannot continue with authenticated tests")
+        return 1
+    
+    # Basic endpoint tests (now authenticated)
+    print("\n📊 BASIC ENDPOINT TESTING")
+    print("-" * 30)
+    
     tester.test_health_check()
-    tester.test_get_departments()
+    
+    # Test departments (should show both active and inactive)
+    dept_success, departments = tester.test_get_departments()
+    
     tester.test_get_users()
     tester.test_get_current_user()
     
-    # Conversation tests
+    # 🏢 DEPARTMENT TOGGLE TESTING
+    print("\n🏢 DEPARTMENT TOGGLE TESTING")
+    print("-" * 30)
+    
+    if dept_success and departments:
+        # Test department toggle functionality
+        for dept in departments[:2]:  # Test first 2 departments
+            dept_id = dept.get('id')
+            dept_name = dept.get('name')
+            current_status = dept.get('active', True)
+            
+            print(f"\n   Testing department: {dept_name} (currently {'active' if current_status else 'inactive'})")
+            
+            # Toggle department status
+            toggle_success, _ = tester.test_department_toggle(dept_id)
+            
+            if toggle_success:
+                # Verify the toggle worked by getting departments again
+                _, updated_departments = tester.test_get_departments()
+                if updated_departments:
+                    updated_dept = next((d for d in updated_departments if d.get('id') == dept_id), None)
+                    if updated_dept:
+                        new_status = updated_dept.get('active', True)
+                        if new_status != current_status:
+                            print(f"   ✓ Department status changed: {current_status} → {new_status}")
+                        else:
+                            print(f"   ⚠ Department status unchanged after toggle")
+    
+    # 💬 CONVERSATION TESTS
+    print("\n💬 CONVERSATION TESTING")
+    print("-" * 30)
+    
     success, conversations = tester.test_get_conversations()
     
     if success and conversations:
@@ -293,7 +347,7 @@ def main():
             # Test messages
             tester.test_get_messages(conv_id)
             
-            # Test sending message
+            # Test sending message (for WebSocket testing)
             tester.test_send_message(conv_id)
             
             # Test mark as read
@@ -308,6 +362,12 @@ def main():
             
             # Test close conversation
             tester.test_close_conversation(conv_id)
+    
+    # 🚪 LOGOUT TEST
+    print("\n🚪 LOGOUT TESTING")
+    print("-" * 30)
+    
+    tester.test_logout()
     
     # Print final results
     print("\n" + "=" * 50)
