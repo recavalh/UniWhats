@@ -4,7 +4,7 @@ from datetime import datetime
 import json
 
 class UniWhatsDeskAPITester:
-    def __init__(self, base_url="https://be14f64f-f2cc-4392-888a-6a11189fd1f5.preview.emergentagent.com"):
+    def __init__(self, base_url="https://2f0940df-cae2-4a25-adec-94b80d9762a7.preview.emergentagent.com"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
