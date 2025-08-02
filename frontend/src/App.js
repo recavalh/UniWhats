@@ -191,8 +191,10 @@ function App() {
       wsConnection.close();
     }
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    // Use backend URL for WebSocket connection
+    const backendUrl = new URL(API_BASE);
+    const protocol = backendUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${backendUrl.host}/ws`;
     
     try {
       const ws = new WebSocket(wsUrl);
