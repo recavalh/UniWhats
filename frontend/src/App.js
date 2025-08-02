@@ -327,7 +327,8 @@ function App() {
       const response = await fetch(`${API_BASE}/api/conversations/${selectedConversation.id}/messages`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
           conversation_id: selectedConversation.id,
