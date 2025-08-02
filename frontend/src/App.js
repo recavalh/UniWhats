@@ -330,6 +330,63 @@ function App() {
     }
   };
 
+  const handleSendMessage = async (messageData) => {
+    if (!selectedConversation) return;
+
+    try {
+      let response;
+      
+      if (messageData.file) {
+        // Handle file upload (image, document, audio)
+        const formData = new FormData();
+        
+        if (messageData.type === 'audio') {
+          // Convert audio blob to file
+          const file = new File([messageData.file], 'audio.wav', { type: 'audio/wav' });
+          formData.append('file', file);
+        } else {
+          formData.append('file', messageData.file);
+        }
+        
+        formData.append('conversation_id', selectedConversation.id);
+        formData.append('body', messageData.body);
+        formData.append('type', messageData.type);
+
+        response = await fetch(`${API_BASE}/api/conversations/${selectedConversation.id}/messages/media`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: formData
+        });
+      } else {
+        // Handle text message
+        response = await fetch(`${API_BASE}/api/conversations/${selectedConversation.id}/messages`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            conversation_id: selectedConversation.id,
+            body: messageData.body,
+            type: messageData.type
+          })
+        });
+      }
+
+      if (response.ok) {
+        await loadMessages(selectedConversation.id);
+        await loadConversations();
+      } else {
+        throw new Error('Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Erro ao enviar mensagem. Tente novamente.');
+    }
+  };
+
   const assignConversation = async (assigneeId, departmentId = null) => {
     if (!selectedConversation) return;
 
