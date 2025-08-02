@@ -289,6 +289,19 @@ function App() {
             
             {currentUser && (
               <div className="flex items-center space-x-3">
+                {/* Settings button for Admin users */}
+                {currentUser.role === 'Manager' && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setCurrentView('settings')}
+                    className="flex items-center space-x-2"
+                  >
+                    <SettingsIcon className="w-4 h-4" />
+                    <span>Configurações</span>
+                  </Button>
+                )}
+                
                 <div className="text-right">
                   <p className="text-sm font-medium text-slate-900">{currentUser.name}</p>
                   <p className="text-xs text-slate-500">{currentUser.role}</p>
