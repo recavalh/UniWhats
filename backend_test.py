@@ -15,6 +15,10 @@ class UniWhatsDeskAPITester:
         url = f"{self.base_url}/{endpoint}"
         if headers is None:
             headers = {'Content-Type': 'application/json'}
+        
+        # Add auth token if available
+        if self.auth_token:
+            headers['Authorization'] = f'Bearer {self.auth_token}'
 
         self.tests_run += 1
         print(f"\n🔍 Testing {name}...")
@@ -55,6 +59,88 @@ class UniWhatsDeskAPITester:
         except Exception as e:
             print(f"❌ Failed - Error: {str(e)}")
             return False, {}
+
+    def test_login(self, email="admin@school.com", password="admin123"):
+        """Test login functionality"""
+        success, response = self.run_test(
+            "Login Authentication",
+            "POST",
+            "api/auth/login",
+            200,
+            data={"email": email, "password": password}
+        )
+        
+        if success and 'token' in response:
+            self.auth_token = response['token']
+            print(f"   ✓ Login successful for {email}")
+            print(f"   ✓ Token received: {self.auth_token[:20]}...")
+            if 'user' in response:
+                user = response['user']
+                print(f"   ✓ User: {user.get('name')} ({user.get('role')})")
+        
+        return success, response
+
+    def test_login_invalid_credentials(self):
+        """Test login with invalid credentials"""
+        success, response = self.run_test(
+            "Login with Invalid Credentials",
+            "POST",
+            "api/auth/login",
+            401,
+            data={"email": "invalid@test.com", "password": "wrongpassword"}
+        )
+        
+        if not success and response.get('detail'):
+            print(f"   ✓ Proper error message: {response['detail']}")
+        
+        return not success  # We expect this to fail
+
+    def test_forgot_password(self, email="admin@school.com"):
+        """Test forgot password functionality"""
+        success, response = self.run_test(
+            "Forgot Password",
+            "POST",
+            "api/auth/forgot-password",
+            200,
+            data={"email": email}
+        )
+        
+        if success and response.get('success'):
+            print(f"   ✓ Password reset initiated for {email}")
+            if 'temp_password' in response:
+                print(f"   ✓ Temporary password: {response['temp_password']}")
+        
+        return success, response
+
+    def test_logout(self):
+        """Test logout functionality"""
+        success, response = self.run_test(
+            "Logout",
+            "POST",
+            "api/auth/logout",
+            200
+        )
+        
+        if success and response.get('success'):
+            print(f"   ✓ Logout successful")
+            # Clear token after logout
+            self.auth_token = None
+        
+        return success, response
+
+    def test_department_toggle(self, dept_id):
+        """Test department activation toggle"""
+        success, response = self.run_test(
+            f"Toggle Department Status ({dept_id})",
+            "POST",
+            f"api/admin/departments/{dept_id}/toggle",
+            200
+        )
+        
+        if success:
+            print(f"   ✓ Department {dept_id} status toggled successfully")
+        
+        return success, response
 
     def test_health_check(self):
         """Test basic health endpoint"""
