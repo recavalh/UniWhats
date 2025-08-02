@@ -951,16 +951,17 @@ function App() {
 
                     <Separator />
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">Tags</label>
-                      <div className="flex flex-wrap gap-1">
-                        {selectedConversation.contact?.tags?.map(tag => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
+                    {/* Tag Manager */}
+                    <TagManager 
+                      conversationId={selectedConversation?.id}
+                      currentTags={selectedConversation?.tags || []}
+                      onTagsUpdate={(newTags) => {
+                        // Update local state
+                        setSelectedConversation(prev => prev ? {...prev, tags: newTags} : null);
+                        // Refresh conversations list
+                        loadConversations();
+                      }}
+                    />
                   </TabsContent>
                   
                   <TabsContent value="actions" className="p-4 space-y-4">
