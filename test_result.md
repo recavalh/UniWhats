@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Investigar o problema de 'Invalid credentials' e verificar se os usuários estão corretos no banco de dados: admin@school.com/admin123, maria@school.com/maria123, carlos@school.com/carlos123, ana@school.com/ana123. Verificar se os dados mock foram carregados corretamente, se as senhas estão sendo hasheadas corretamente, testar o endpoint de login com dados corretos e incorretos, e verificar logs do backend."
+user_problem_statement: "Investigar o problema de 'Invalid credentials' e verificar se os usuários estão corretos no banco de dados: admin@school.com/admin123, maria@school.com/maria123, carlos@school.com/carlos123, ana@school.com/ana123. Verificar se os dados mock foram carregados corretamente, se as senhas estão sendo hashadas corretamente, testar o endpoint de login com dados corretos e incorretos, e verificar logs do backend."
 
 backend:
   - task: "Role-based access control for conversations"
