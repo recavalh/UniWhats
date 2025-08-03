@@ -209,7 +209,7 @@ const Login = ({ onLogin }) => {
               onClick={() => quickLogin('admin@school.com', 'Manager')}
               className="text-xs"
             >
-              👨‍💼 Admin
+              👨‍💼 Gerente
             </Button>
             <Button
               variant="outline"
