@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Depends, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import json
 from datetime import datetime, timedelta
 import os
@@ -165,8 +165,8 @@ class Contact(BaseModel):
     phone: str
     name: str
     student_id: Optional[str] = None
-    tags: List[str] = []
-    custom_fields: dict = {}
+    tags: List[str] = Field(default_factory=list)
+    custom_fields: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
 
 class Message(BaseModel):
@@ -187,7 +187,7 @@ class Conversation(BaseModel):
     assigned_user_id: Optional[str] = None
     last_message_at: datetime
     status: str  # 'open', 'closed', 'assigned'
-    tags: List[str] = []
+    tags: List[str] = Field(default_factory=list)
     created_at: datetime
 
 class LoginRequest(BaseModel):
