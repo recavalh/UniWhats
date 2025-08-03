@@ -627,7 +627,7 @@ function App() {
                   <span>{wsConnection ? 'Conectado' : 'Desconectado'}</span>
                 </div>
                 
-                {/* Settings button for Admin users */}
+                {/* Settings button for Manager users */}
                 {currentUser.role === 'Manager' && (
                   <Button 
                     variant="outline" 

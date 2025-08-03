@@ -63,7 +63,7 @@ const Settings = ({ currentUser, onBack }) => {
   });
   const [notification, setNotification] = useState('');
 
-  // Check if current user is admin
+  // Check if current user is Manager
   const isAdmin = currentUser?.role === 'Manager';
 
   useEffect(() => {
@@ -357,7 +357,7 @@ const Settings = ({ currentUser, onBack }) => {
         <div className="text-center">
           <Shield className="w-16 h-16 text-slate-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-900 mb-2">Acesso Negado</h3>
-          <p className="text-slate-500">Você precisa de permissões de administrador para acessar as configurações.</p>
+          <p className="text-slate-500">Você precisa de permissões de gerente para acessar as configurações.</p>
           <Button onClick={onBack} className="mt-4">
             Voltar ao Inbox
           </Button>
@@ -401,7 +401,7 @@ const Settings = ({ currentUser, onBack }) => {
           <div className="flex items-center space-x-3">
             <div className="text-right">
               <p className="text-sm font-medium text-slate-900">{currentUser.name}</p>
-              <p className="text-xs text-slate-500">Administrador</p>
+              <p className="text-xs text-slate-500">Gerente</p>
             </div>
             <Avatar className="w-8 h-8">
               <img src={currentUser.avatar} alt={currentUser.name} className="rounded-full" />
