@@ -17,7 +17,12 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://uni-whats.vercel.app"],
+    # Allow production site, local development, and any HTTPS preview environments
+    allow_origins=[
+        "https://uni-whats.vercel.app",
+        "http://localhost:3000",
+    ],
+    allow_origin_regex=r"https://.*",  # match Vercel/preview domains
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
