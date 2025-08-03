@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Depends, Request, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Depends, Request, UploadFile, File, Form, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -17,12 +17,13 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    # Allow production site, local development, and any HTTPS preview environments
+    # Allow production site, local development, and specific preview environments
     allow_origins=[
         "https://uni-whats.vercel.app",
         "http://localhost:3000",
     ],
-    allow_origin_regex=r"https://.*",  # match Vercel/preview domains
+    # Match dynamic Vercel builds and emergentagent preview deployments
+    allow_origin_regex=r"https://(?:.+\.)?(?:vercel\.app|preview\.emergentagent\.com)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -433,6 +434,12 @@ async def startup_event():
 @app.get("/")
 async def root():
     return {"message": "UniWhats Desk API is running"}
+
+
+@app.options("/{path:path}")
+async def preflight_handler(path: str):
+    """Generic preflight handler so CORS headers are returned for any path."""
+    return Response(status_code=200)
 
 @app.post("/api/auth/login")
 async def login(request: LoginRequest):
