@@ -12,6 +12,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 import bcrypt
 import base64
+import re
 
 app = FastAPI()
 
@@ -28,6 +29,32 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Ensure CORS headers are returned even for missing routes or preflight requests
+ALLOWED_ORIGINS = {
+    "https://uni-whats.vercel.app",
+    "http://localhost:3000",
+}
+ORIGIN_PATTERN = re.compile(r"https://(?:.+\.)?(?:vercel\.app|preview\.emergentagent\.com)")
+
+
+@app.middleware("http")
+async def ensure_cors_headers(request: Request, call_next):
+    """Handle generic OPTIONS requests and attach CORS headers to all responses."""
+    origin = request.headers.get("origin")
+    if request.method == "OPTIONS":
+        response = Response(status_code=200)
+    else:
+        response = await call_next(request)
+
+    if origin and (origin in ALLOWED_ORIGINS or ORIGIN_PATTERN.match(origin)):
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers.setdefault("Access-Control-Allow-Methods", "*")
+        request_headers = request.headers.get("access-control-request-headers")
+        response.headers["Access-Control-Allow-Headers"] = request_headers or "*"
+    return response
 
 # Mock data
 def clean_document(doc: dict) -> dict:
