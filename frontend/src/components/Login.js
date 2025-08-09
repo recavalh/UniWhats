@@ -12,7 +12,15 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+// Determine API base URL.
+// - Use REACT_APP_BACKEND_URL if provided
+// - Use local backend during development
+// - Fallback to same-origin when deployed
+const API_BASE =
+  process.env.REACT_APP_BACKEND_URL ||
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:8001'
+    : '');
 
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
